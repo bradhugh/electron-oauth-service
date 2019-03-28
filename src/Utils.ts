@@ -1,5 +1,8 @@
-import { net } from "electron";
+import { net, BrowserWindow } from "electron";
 import * as querystring from "querystring";
+import { OAuth2Response, OAuth2Config, OAuth2Provider } from "electron-oauth-helper";
+import { TokenCache } from "./cache/TokenCache";
+import { AuthenticationResult } from "./AuthenticationResult";
 
 export interface PostResponse {
     headers: any;
@@ -23,16 +26,64 @@ export class Utils {
         return date;
     }
 
-    public static async refreshToken(url: string, refreshToken: string) {
-        const myData = await Utils.postRequest(url, {
+    public static async refreshTokenAsync(url: string, refreshToken: string): Promise<OAuth2Response> {
+        const postResponse = await Utils.postRequestAsync(url, {
             grant_type: "refresh_token",
             refresh_token: refreshToken
         });
 
-        console.log(`Response Body: ${myData.body.toString('utf8')}`);
+        const response: OAuth2Response = JSON.parse(postResponse.body.toString('utf8'));
+        return response;
     }
 
-    public static postRequest(url: string, parameters: Object): Promise<PostResponse> {
+    public static async getAuthTokenInteractiveAsync(
+        authorizeUrl: string,
+        accessTokenUrl: string,
+        clientId: string,
+        redirectUri: string,
+        tenantId: string,
+        resourceId: string,
+        scope: string,
+        tokenCache: TokenCache): Promise<any> {
+        const config: OAuth2Config = {
+            authorize_url: authorizeUrl,
+            access_token_url:accessTokenUrl,
+            client_id: clientId,
+            scope: `https://${tenantId}/${resourceId}/${scope}`,
+            response_type: "code",
+            redirect_uri: redirectUri
+        };
+
+        const provider = new OAuth2Provider(config);
+
+        let authWindow = new BrowserWindow({
+            width: 600,
+            height: 800,
+            webPreferences: {
+              nodeIntegration: false, // We recommend disabling nodeIntegration for security.
+              contextIsolation: true // We recommend enabling contextIsolation for security.
+              // see https://github.com/electron/electron/blob/master/docs/tutorial/security.md
+            },
+        });
+
+        try {
+            const response = await provider.perform(authWindow);
+
+            // TODO: Cache Token
+            
+            return new AuthenticationResult(
+                response.token_type,
+                response.access_token,
+                Utils.tokenTimeToJsDate(response.expires_on),
+                null); // TODO: ext_expires_in
+
+          } finally {
+            authWindow.close();
+            authWindow = null;
+          }
+    }
+
+    public static postRequestAsync(url: string, parameters: Object): Promise<PostResponse> {
 
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify(parameters);

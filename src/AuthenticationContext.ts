@@ -1,6 +1,7 @@
 import { OAuth2Provider, OAuth2Config } from "electron-oauth-helper";
 import { BrowserWindow } from "electron";
 import { Utils } from "./Utils";
+import { TokenCache } from "./cache/TokenCache";
 
 export class UserInfo {
 }
@@ -35,6 +36,8 @@ export class AuthenticationResult {
 
 export class AuthenticationContext {
 
+    private tokenCache: TokenCache = new TokenCache();
+
     constructor(
         private authorizeUrl: string,
         private accessTokenUrl: string,
@@ -52,42 +55,20 @@ export class AuthenticationContext {
             redirectUri = this.redirectUri;
         }
 
-        const config: OAuth2Config = {
-            authorize_url: this.authorizeUrl,
-            access_token_url: this.accessTokenUrl,
-            client_id: clientId,
-            scope: `https://${tenant}/${resource}/${scope}`,
-            response_type: "code",
-            redirect_uri: redirectUri
-        };
+        // Check if token is in the cache
+        // Check if token needs refreshing
+        
+        // Get the token interactively if needed
+        const result = await Utils.getAuthTokenInteractiveAsync(
+            this.authorizeUrl,
+            this.accessTokenUrl,
+            clientId,
+            redirectUri,
+            tenant,
+            resource,
+            scope,
+            this.tokenCache);
 
-        const provider = new OAuth2Provider(config);
-
-        let authWindow = new BrowserWindow({
-            width: 600,
-            height: 800,
-            webPreferences: {
-              nodeIntegration: false, // We recommend disabling nodeIntegration for security.
-              contextIsolation: true // We recommend enabling contextIsolation for security.
-              // see https://github.com/electron/electron/blob/master/docs/tutorial/security.md
-            },
-        });
-
-        try {
-            const response = await provider.perform(authWindow);
-            console.log(response);
-
-            await Utils.refreshToken(this.accessTokenUrl, response.refresh_token);
-            
-            return new AuthenticationResult(
-                response.token_type,
-                response.access_token,
-                Utils.tokenTimeToJsDate(response.expires_on),
-                null); // TODO: ext_expires_in
-
-          } finally {
-            authWindow.close();
-            authWindow = null;
-          }
+        return result;
     }
 }

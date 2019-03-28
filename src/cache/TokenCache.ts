@@ -1,6 +1,6 @@
 import { EventEmitter } from "electron";
 import { TokenCacheItem } from "./TokenCacheItem";
-import { AuthenticationResultEx } from "./AuthenticationResult";
+import { AuthenticationResultEx } from "../AuthenticationResult";
 import { TokenCacheKey } from "./TokenCacheKey";
 
 export class TokenCacheNotificationArgs {
