@@ -57,6 +57,7 @@ export class AuthenticationContext {
         // Check if token is in the cache
         let cacheResult = this.tokenCache.loadFromCache({
             authority: this.authority,
+            resource: resource,
             clientId: clientId,
             subjectType: TokenSubjectType.Client,
         });

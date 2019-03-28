@@ -106,6 +106,13 @@ export class TokenCache extends EventEmitter {
         for (const key of keys) {
             const entry = this.tokenCacheDictionary[key];
             const cacheKey = TokenCacheKey.fromStringKey(key);
+
+            console.log(`Authority: ${(!authority || cacheKey.authority === authority)}`);
+            console.log(`clientId: ${(!clientId || cacheKey.clientIdEquals(clientId))}`);
+            console.log(`uniqueId: ${(!uniqueId || cacheKey.uniqueId === uniqueId)}`);
+            console.log(`displayableId: ${(!displayableId || cacheKey.displayableIdEquals(displayableId))}`);
+            console.log(`tokenSubjectType: ${cacheKey.tokenSubjectType === subjectType}`);
+
             if ((!authority || cacheKey.authority === authority)
                 && (!clientId || cacheKey.clientIdEquals(clientId))
                 && (!uniqueId || cacheKey.uniqueId === uniqueId)
@@ -185,24 +192,28 @@ export class TokenCache extends EventEmitter {
     }
 
     private loadSingleItemFromCache(cacheQueryData: CacheQueryData): KeyAndResult {
-        const source = this.queryCache(
+        let cacheItems = this.queryCache(
             cacheQueryData.authority,
             cacheQueryData.clientId,
             cacheQueryData.subjectType,
             cacheQueryData.uniqueId,
             cacheQueryData.displayableId);
 
-        const list = source.filter(p => p.key.resourceEquals(cacheQueryData.resource));
-        const count = list.length;
+        for (const temp of cacheItems) {
+            console.log(``)
+        }
+
+        cacheItems = cacheItems.filter(p => p.key.resourceEquals(cacheQueryData.resource));
+        const count = cacheItems.length;
         let result: KeyAndResult = null;
         switch (count) {
             case 1:
                 // An item matching the requested resource was found in the cache
-                result = list[0];
+                result = cacheItems[0];
                 break;
 
             case 0:
-                const multiResourceTokens = source.filter(p => p.value.isMultipleResourceRefreshToken);
+                const multiResourceTokens = cacheItems.filter(p => p.value.isMultipleResourceRefreshToken);
                 if (multiResourceTokens.length) {
                     // A Multi Resource Refresh Token for a different resource was found which can be used
                     result = multiResourceTokens[0];

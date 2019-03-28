@@ -18,17 +18,25 @@ export class TokenCacheKey {
     }
 
     public static fromStringKey(stringKey: string): TokenCacheKey {
-        const parts: string[] = stringKey.split(':::');
-        if (parts.length !== 6) {
+        const exp = new RegExp(/^(.+):::(.+):::(.+):::(.*):::(.*):::(.+)$/);
+        const match = exp.exec(stringKey);
+        if (!match) {
             throw new Error(`Token cache key ${stringKey} is in the incorrect format!`);
         }
 
-        const authority = parts[0];
-        const resourceId = parts[1];
-        const clientId = parts[3];
-        const uniqueId = parts[4];
-        const displayableId = parts[5];
-        const tokenSubjectType: TokenSubjectType = parseInt(parts[6]);
+        const authority = match[1];
+        const resourceId = match[2];
+        const clientId = match[3];
+        const uniqueId = match[4];
+        const displayableId = match[5];
+        const tokenSubjectType: TokenSubjectType = parseInt(match[6]);
+
+        console.log(`fromStringKey:
+            Authority: ${authority}
+            resourceId ${resourceId}
+            clientId: ${clientId}
+            uniqueId: ${uniqueId}
+            tokenSubjectType: ${tokenSubjectType}`);
 
         return new TokenCacheKey(
             authority,
