@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": { "*": ["types/*"] },
+        "module": "commonjs",
+        "lib":[ "es2018", "dom" ],
+        "target": "es2018",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "moduleResolution": "node",
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "types": [ "node" ],
+        "declaration": true,
+        "typeRoots": [ "node_modules/@types" ]
+    },
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "dist/**",
+        "node_modules"
+    ],
+    "compileOnSave": true
+}

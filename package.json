@@ -1,0 +1,32 @@
+{
+  "name": "electron-oauth-service",
+  "version": "1.0.0",
+  "description": "An authentication service for electron applications",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bradhugh/electron-oauth-service.git"
+  },
+  "keywords": [
+    "electron",
+    "oauth"
+  ],
+  "author": "Brad Hughes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bradhugh/electron-oauth-service/issues"
+  },
+  "homepage": "https://github.com/bradhugh/electron-oauth-service#readme",
+  "dependencies": {
+    "electron-oauth-helper": "git://github.com/bradhugh/electron-oauth-helper.git#fixes"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.6.10",
+    "@types/node": "^11.12.0",
+    "typescript": "^3.3.4000"
+  }
+}
