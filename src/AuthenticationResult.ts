@@ -1,5 +1,7 @@
 
 export class UserInfo {
+    public uniqueId?: string;
+    public displayableId?: string;
 }
 
 export class AuthenticationResult {
@@ -26,6 +28,14 @@ export class AuthenticationResult {
             this.extendedExpiresOn = extendedExpiresOn;
         } else {
             this.extendedExpiresOn = expiresOn;
+        }
+    }
+
+    public updateTenantAndUserInfo(tenantId: string, idToken: string, userInfo: UserInfo) {
+        this.tenantId = tenantId;
+        this.idToken = idToken;
+        if (userInfo) {
+            this.userInfo = userInfo; // REVIEW: UserInfo = new UserInfo(userInfo);
         }
     }
 }

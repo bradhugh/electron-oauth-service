@@ -1,8 +1,8 @@
 import { net, BrowserWindow } from "electron";
 import * as querystring from "querystring";
 import { OAuth2Response, OAuth2Config, OAuth2Provider } from "electron-oauth-helper";
-import { TokenCache } from "./cache/TokenCache";
-import { AuthenticationResult } from "./AuthenticationResult";
+import { TokenCache, TokenSubjectType } from "./cache/TokenCache";
+import { AuthenticationResult, AuthenticationResultEx } from "./AuthenticationResult";
 
 export interface PostResponse {
     headers: any;
@@ -37,6 +37,7 @@ export class Utils {
     }
 
     public static async getAuthTokenInteractiveAsync(
+        authority: string,
         authorizeUrl: string,
         accessTokenUrl: string,
         clientId: string,
@@ -69,13 +70,21 @@ export class Utils {
         try {
             const response = await provider.perform(authWindow);
 
-            // TODO: Cache Token
-            
-            return new AuthenticationResult(
+            const result = new AuthenticationResult(
                 response.token_type,
                 response.access_token,
                 Utils.tokenTimeToJsDate(response.expires_on),
                 null); // TODO: ext_expires_in
+
+            const exResult = new AuthenticationResultEx();
+            exResult.result = result;
+            exResult.refreshToken = response.refresh_token;
+            exResult.error = null;
+
+            // REVIEW: What should TokenSubjectType be?
+            tokenCache.storeToCache(exResult, authority, resourceId, clientId, TokenSubjectType.Client);
+            
+            return result;
 
           } finally {
             authWindow.close();

@@ -1,7 +1,5 @@
-import { OAuth2Provider, OAuth2Config } from "electron-oauth-helper";
-import { BrowserWindow } from "electron";
 import { Utils } from "./Utils";
-import { TokenCache } from "./cache/TokenCache";
+import { TokenCache, TokenSubjectType } from "./cache/TokenCache";
 
 export class UserInfo {
 }
@@ -45,6 +43,7 @@ export class AuthenticationContext {
     ) {}
 
     public async acquireTokenAsync(
+        authority: string,
         tenant: string,
         resource: string,
         scope: string = "user_impersonation",
@@ -56,10 +55,19 @@ export class AuthenticationContext {
         }
 
         // Check if token is in the cache
-        // Check if token needs refreshing
+        let cacheResult = this.tokenCache.loadFromCache({
+            authority: authority,
+            clientId: clientId,
+            subjectType: TokenSubjectType.Client,
+        });
+
+        if (cacheResult) {
+            return cacheResult.result;
+        }
         
         // Get the token interactively if needed
         const result = await Utils.getAuthTokenInteractiveAsync(
+            authority,
             this.authorizeUrl,
             this.accessTokenUrl,
             clientId,
