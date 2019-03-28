@@ -37,13 +37,13 @@ export class AuthenticationContext {
     private tokenCache: TokenCache = new TokenCache();
 
     constructor(
+        private authority: string,
         private authorizeUrl: string,
         private accessTokenUrl: string,
         private redirectUri: string
     ) {}
 
     public async acquireTokenAsync(
-        authority: string,
         tenant: string,
         resource: string,
         scope: string = "user_impersonation",
@@ -56,7 +56,7 @@ export class AuthenticationContext {
 
         // Check if token is in the cache
         let cacheResult = this.tokenCache.loadFromCache({
-            authority: authority,
+            authority: this.authority,
             clientId: clientId,
             subjectType: TokenSubjectType.Client,
         });
@@ -67,7 +67,7 @@ export class AuthenticationContext {
         
         // Get the token interactively if needed
         const result = await Utils.getAuthTokenInteractiveAsync(
-            authority,
+            this.authority,
             this.authorizeUrl,
             this.accessTokenUrl,
             clientId,
