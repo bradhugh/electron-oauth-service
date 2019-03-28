@@ -62,12 +62,29 @@ export class AuthenticationContext {
             subjectType: TokenSubjectType.Client,
         });
 
-        if (cacheResult) {
+        // We found a valid token in the cache
+        if (cacheResult && cacheResult.result) {
             return cacheResult.result;
+        }
+
+        let result: AuthenticationResult = null;
+        // Token is expired, but we have a refresh token
+        if (cacheResult) {
+            result = await Utils.getAuthTokenByRefreshTokenAsync(
+                this.accessTokenUrl,
+                this.authority,
+                resource,
+                clientId,
+                cacheResult.refreshToken,
+                this.tokenCache);
+
+            if (result && result.accessToken) {
+                return result;
+            }
         }
         
         // Get the token interactively if needed
-        const result = await Utils.getAuthTokenInteractiveAsync(
+        result = await Utils.getAuthTokenInteractiveAsync(
             this.authority,
             this.authorizeUrl,
             this.accessTokenUrl,

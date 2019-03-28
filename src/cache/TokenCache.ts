@@ -139,13 +139,13 @@ export class TokenCache extends EventEmitter {
             result = kvp.value.clone();
             
             const now = new Date();
-            const validByExpiresOn = result.result.expiresOn.getTime() <= now.getTime() + (1000 * 60 * 5);
-            const validByExpiresOnExtended = result.result.extendedExpiresOn.getTime() <= now.getTime();
+            const expiredByExpiresOn = result.result.expiresOn.getTime() <= now.getTime() + (1000 * 60 * 5);
+            const expiredByExpiresOnExtended = result.result.extendedExpiresOn.getTime() <= now.getTime();
 
             if (key.authority === cacheQueryData.authority) {
                 // Cross-tenant refresh token found in the cache
                 result.result.accessToken = null;
-            } else if (validByExpiresOn && !cacheQueryData.extendedLifeTimeEnabled) {
+            } else if (expiredByExpiresOn && !cacheQueryData.extendedLifeTimeEnabled) {
                 // An expired or near expiry token was found in the cache
                 result.result.accessToken = null;
             } else if (!key.resourceEquals(cacheQueryData.resource)) {
@@ -157,11 +157,11 @@ export class TokenCache extends EventEmitter {
 				tempResult.resourceInResponse = result.resourceInResponse;
 				tempResult.result.updateTenantAndUserInfo(result.result.tenantId, result.result.idToken, result.result.userInfo);
 				result = tempResult;
-            } else if ((!validByExpiresOnExtended && cacheQueryData.extendedLifeTimeEnabled) && validByExpiresOn) {
+            } else if ((!expiredByExpiresOnExtended && cacheQueryData.extendedLifeTimeEnabled) && expiredByExpiresOn) {
                 // The extendedLifeTime is enabled and a stale AT with extendedLifeTimeEnabled is returned
                 result.result.extendedLifeTimeToken = true;
 				result.result.expiresOn = result.result.extendedExpiresOn;
-            } else if (validByExpiresOnExtended) {
+            } else if (expiredByExpiresOnExtended) {
                 // The AT has expired its ExtendedLifeTime
                 result.result.accessToken = null;
             } else {

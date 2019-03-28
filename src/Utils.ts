@@ -3,6 +3,7 @@ import * as querystring from "querystring";
 import { OAuth2Response, OAuth2Config, OAuth2Provider } from "electron-oauth-helper";
 import { TokenCache, TokenSubjectType } from "./cache/TokenCache";
 import { AuthenticationResult, AuthenticationResultEx } from "./AuthenticationResult";
+import { TokenCacheItem } from "./cache/TokenCacheItem";
 
 export interface PostResponse {
     headers: any;
@@ -26,14 +27,41 @@ export class Utils {
         return date;
     }
 
-    public static async refreshTokenAsync(url: string, refreshToken: string): Promise<OAuth2Response> {
+    public static async getAuthTokenByRefreshTokenAsync(
+        url: string,
+        authority: string,
+        resource: string,
+        clientId: string,
+        refreshToken: string,
+        tokenCache: TokenCache): Promise<AuthenticationResult> {
+
         const postResponse = await Utils.postRequestAsync(url, {
             grant_type: "refresh_token",
             refresh_token: refreshToken
         });
 
-        const response: OAuth2Response = JSON.parse(postResponse.body.toString('utf8'));
-        return response;
+        if (postResponse.statusCode !== 200) {
+            throw new Error(`Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
+        }
+
+        const responseString = postResponse.body.toString('utf8');
+        const response: OAuth2Response = JSON.parse(responseString);
+
+        const result = new AuthenticationResult(
+            response.token_type,
+            response.access_token,
+            Utils.tokenTimeToJsDate(response.expires_on),
+            null); // TODO: ext_expires_in
+
+        const exResult = new AuthenticationResultEx();
+        exResult.result = result;
+        exResult.refreshToken = response.refresh_token;
+        exResult.error = null;
+
+        // REVIEW: What should TokenSubjectType be?
+        tokenCache.storeToCache(exResult, authority, resource, clientId, TokenSubjectType.Client);
+
+        return result;
     }
 
     public static async getAuthTokenInteractiveAsync(
@@ -45,7 +73,7 @@ export class Utils {
         tenantId: string,
         resourceId: string,
         scope: string,
-        tokenCache: TokenCache): Promise<any> {
+        tokenCache: TokenCache): Promise<AuthenticationResult> {
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
             access_token_url:accessTokenUrl,
