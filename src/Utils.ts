@@ -1,6 +1,13 @@
 import { net } from "electron";
 import * as querystring from "querystring";
 
+export interface PostResponse {
+    headers: any;
+    statusCode: number;
+    statusMessage: string;
+    body: Buffer;
+}
+
 export class Utils {
     public static tokenTimeToJsDate(time: string) {
 
@@ -22,10 +29,10 @@ export class Utils {
             refresh_token: refreshToken
         });
 
-        console.log(myData);
+        console.log(`Response Body: ${myData.body.toString('utf8')}`);
     }
 
-    public static postRequest(url: string, parameters: Object): Promise<any> {
+    public static postRequest(url: string, parameters: Object): Promise<PostResponse> {
 
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify(parameters);

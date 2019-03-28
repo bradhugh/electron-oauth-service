@@ -77,10 +77,8 @@ export class AuthenticationContext {
             const response = await provider.perform(authWindow);
             console.log(response);
 
-            const refreshed = await Utils.refreshToken(this.accessTokenUrl, response.refresh_token);
-            console.log("REFRESHED");
-            console.log(refreshed);
-
+            await Utils.refreshToken(this.accessTokenUrl, response.refresh_token);
+            
             return new AuthenticationResult(
                 response.token_type,
                 response.access_token,
