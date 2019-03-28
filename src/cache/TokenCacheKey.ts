@@ -1,25 +1,19 @@
 import { TokenSubjectType } from "./TokenCache";
 
 export class TokenCacheKey {
-    public authority: string;
-    public resource: string;
-    public clientId: string;
-    public uniqueId: string;
-    public displayableId: string;
-    public tokenSubjectType: TokenSubjectType;
 
     constructor(
-        authority: string,
-        resource: string,
-        clientId: string,
-        tokenSubjectType: TokenSubjectType,
-        uniqueId: string,
-        displayableId: string) {}
+        public authority: string,
+        public resource: string,
+        public clientId: string,
+        public tokenSubjectType: TokenSubjectType,
+        public uniqueId: string,
+        public displayableId: string) {}
 
     public getStringKey(): string {
         return `${this.authority}:::${this.resource.toLowerCase()}:::${this.clientId.toLowerCase()}` +
-            `:::${this.uniqueId}` +
-            `:::${this.displayableId !== null ? this.displayableId.toLowerCase() : null}` +
+            `:::${this.uniqueId ? this.uniqueId : ''}` +
+            `:::${this.displayableId ? this.displayableId.toLowerCase() : ''}` +
             `:::${this.tokenSubjectType}`;
     }
 

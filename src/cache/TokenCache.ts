@@ -25,7 +25,7 @@ export interface KeyAndResult {
 
 export class TokenCache extends EventEmitter {
 
-    private tokenCacheDictionary: { [key: string]: AuthenticationResultEx } ;
+    private tokenCacheDictionary: { [key: string]: AuthenticationResultEx } = {};
 
     private _hasStateChanged = false;
 
@@ -177,6 +177,8 @@ export class TokenCache extends EventEmitter {
         } else {
             // No matching token was found in the cache
             console.log(`No matching token was found in the cache`);
+            console.log(this.tokenCacheDictionary);
+            console.log(cacheQueryData);
         }
 
         return result;
@@ -199,7 +201,7 @@ export class TokenCache extends EventEmitter {
                 result = list[0];
                 break;
 
-            case 1:
+            case 0:
                 const multiResourceTokens = source.filter(p => p.value.isMultipleResourceRefreshToken);
                 if (multiResourceTokens.length) {
                     // A Multi Resource Refresh Token for a different resource was found which can be used
