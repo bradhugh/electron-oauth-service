@@ -178,4 +178,24 @@ export class Utils {
             request.end();
         });
     }
+
+    public static trimStart(input: string, character: string): string {
+        const exp = new RegExp(`^[${Utils.escapeRegExp(character)}]+`, "g");
+        return input.replace(exp, "");
+    }
+
+    public static trimEnd(input: string, character: string): string {
+        const exp = new RegExp(`[${Utils.escapeRegExp(character)}]+$`, "g");
+        return input.replace(exp, "");
+    }
+
+    public static trim(input: string, character: string): string {
+        input = this.trimStart(input, character);
+        input = this.trimEnd(input, character);
+        return input;
+    }
+
+    public static escapeRegExp(input: string): string {
+        return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 }

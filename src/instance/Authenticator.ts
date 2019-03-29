@@ -1,5 +1,6 @@
 import { IServiceBundle } from "../core/ServiceBundle";
 import { InstanceDiscovery } from "./InstanceDiscovery";
+import { RequestContext } from "../core/RequestContext";
 
 export enum AuthorityType {
     AAD,
@@ -12,15 +13,14 @@ export class Authenticator {
     private _validateAuthority = false;
     private _updatedFromTemplate = false;
     private _authority: string = null;
-    private _authorityType: AuthorityType;
-    private _serviceBundle: IServiceBundle;
-
-    public authorizationUri: string;
-    public deviceCodeUri: string;
-    public tokenUri: string;
-    public userRealmUriPrefix: string;
-    public isTenantless: boolean;
-    public selfSignedJwtAudience: string;
+    private _authorityType: AuthorityType = AuthorityType.AAD;
+    private _serviceBundle: IServiceBundle = null;
+    private _authorizationUri: string = null;
+    private _deviceCodeUri: string = null;
+    private _tokenUri: string = null;
+    private _userRealmUriPrefix: string = null;
+    private _isTenantless: boolean = false;
+    private _selfSignedJwtAudience: string = null;
 
     public get validateAuthority(): boolean {
         return this._validateAuthority;
@@ -38,15 +38,38 @@ export class Authenticator {
         return this._serviceBundle;
     }
 
+    public get authorizationUri(): string {
+        return this._authorizationUri;
+    }
+
+    public get deviceCodeUri(): string {
+        return this._deviceCodeUri;
+    }
+
+    public get userRealmUriPrefix(): string {
+        return this._userRealmUriPrefix;
+    }
+
+    public get isTenantless(): boolean {
+        return this._isTenantless;
+    }
+
+    public get selfSignedJwtAudience(): string {
+        return this._selfSignedJwtAudience;
+    }
+
     constructor(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean) {
         this.init(serviceBundle, authority, validateAuthority);
     }
 
-    public UpdateAuthorityAsync(authority: string): Promise<void> {
+    public async UpdateAuthorityAsync(serviceBundle: IServiceBundle, authority: string, requestContext: RequestContext): Promise<void> {
+        this.init(serviceBundle, authority, this.validateAuthority);
 
+        this._updatedFromTemplate = false;
+        await this.UpdateFromTemplateAsync(requestContext);
     }
 
-    public async UpdateFromTemplateAsync(): Promise<void> {
+    public async UpdateFromTemplateAsync(requestContext: RequestContext): Promise<void> {
         if (!this._updatedFromTemplate) {
             const authorityUri = new URL(this.authority);
             var host = authorityUri.host;
@@ -57,20 +80,20 @@ export class Authenticator {
             const tenant: string = segments[segments.length - 1];
             if (this.authorityType == AuthorityType.AAD)
             {
-                var metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(authorityUri, this.validateAuthority, requestContext).ConfigureAwait(false);
-                host = metadata.PreferredNetwork;
+                var metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(authorityUri, this.validateAuthority, requestContext);
+                host = metadata.preferred_network;
                 // All the endpoints will use this updated host, and it affects future network calls, as desired.
                 // The Authority remains its original host, and will be used in TokenCache later.
             } else {
                 this.serviceBundle.instanceDiscovery.addMetadataEntry(host);
             }
 
-            this.authorizationUri = InstanceDiscovery.formatAuthorizeEndpoint(host, tenant);
-            this.deviceCodeUri = `https://${host}/${tenant}/oauth2/devicecode`;
-            this.tokenUri = `https://${host}/${tenant}/oauth2/token`;
-            this.userRealmUriPrefix = `https://${host}/common/userrealm/`;
-            this.isTenantless = tenant.toLowerCase() === this.tenantlessTenantName.toLowerCase();
-            this.selfSignedJwtAudience = this.tokenUri;
+            this._authorizationUri = InstanceDiscovery.formatAuthorizeEndpoint(host, tenant);
+            this._deviceCodeUri = `https://${host}/${tenant}/oauth2/devicecode`;
+            this._tokenUri = `https://${host}/${tenant}/oauth2/token`;
+            this._userRealmUriPrefix = `https://${host}/common/userrealm/`;
+            this._isTenantless = tenant.toLowerCase() === this.tenantlessTenantName.toLowerCase();
+            this._selfSignedJwtAudience = this._tokenUri;
             this._updatedFromTemplate = true;
         }
     }
