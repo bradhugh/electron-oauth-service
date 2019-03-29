@@ -27,42 +27,54 @@ export class Utils {
         return date;
     }
 
-    public static async getAuthTokenByRefreshTokenAsync(
+    public static async refreshAccessTokenAsync(
         url: string,
         authority: string,
         resource: string,
         clientId: string,
-        refreshToken: string,
-        tokenCache: TokenCache): Promise<AuthenticationResult> {
+        resultEx: AuthenticationResultEx,
+        tokenCache: TokenCache): Promise<AuthenticationResultEx> {
 
         const postResponse = await Utils.postRequestAsync(url, {
             grant_type: "refresh_token",
-            refresh_token: refreshToken
+            refresh_token: resultEx.refreshToken,
+            scope: "openid",
+            resource: resource,
+            client_id: clientId,
         });
 
         if (postResponse.statusCode !== 200) {
+            console.log("FAILED RESPONSE:");
+            console.log(postResponse.body.toString('utf8'));
             throw new Error(`Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
         }
 
         const responseString = postResponse.body.toString('utf8');
+        
+        console.log("****POST RESPONSE****");
+        console.log(responseString);
+
         const response: OAuth2Response = JSON.parse(responseString);
 
-        const result = new AuthenticationResult(
+        resultEx.result = new AuthenticationResult(
             response.token_type,
             response.access_token,
             Utils.tokenTimeToJsDate(response.expires_on),
             null); // TODO: ext_expires_in
 
-        const exResult = new AuthenticationResultEx();
-        exResult.result = result;
-        exResult.refreshToken = response.refresh_token;
-        exResult.error = null;
+        if (!response.refresh_token) {
+            console.log("Refresh token was missing from the token refresh response, so the refresh token in the request is returned instead");
+        } else {
+            resultEx.refreshToken = response.refresh_token;
+        }
 
         // REVIEW: What should TokenSubjectType be?
-        tokenCache.storeToCache(exResult, authority, resource, clientId, TokenSubjectType.Client);
+        tokenCache.storeToCache(resultEx, authority, resource, clientId, TokenSubjectType.Client);
 
-        return result;
+        return resultEx;
     }
+
+    //private async sendTokenRequestByRefreshTokenAsync(refreshToken: string): AuthenticationResultEx {}
 
     public static async getAuthTokenInteractiveAsync(
         authority: string,
@@ -73,14 +85,14 @@ export class Utils {
         tenantId: string,
         resourceId: string,
         scope: string,
-        tokenCache: TokenCache): Promise<AuthenticationResult> {
+        tokenCache: TokenCache): Promise<AuthenticationResultEx> {
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
             access_token_url:accessTokenUrl,
             client_id: clientId,
             scope: `https://${tenantId}/${resourceId}/${scope}`,
             response_type: "code",
-            redirect_uri: redirectUri
+            redirect_uri: redirectUri,
         };
 
         const provider = new OAuth2Provider(config);
@@ -112,7 +124,7 @@ export class Utils {
             // REVIEW: What should TokenSubjectType be?
             tokenCache.storeToCache(exResult, authority, resourceId, clientId, TokenSubjectType.Client);
             
-            return result;
+            return exResult;
 
           } finally {
             authWindow.close();

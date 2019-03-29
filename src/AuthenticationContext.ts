@@ -1,5 +1,6 @@
 import { Utils } from "./Utils";
 import { TokenCache, TokenSubjectType } from "./cache/TokenCache";
+import { AuthenticationResultEx } from "./AuthenticationResult";
 
 export class UserInfo {
 }
@@ -55,31 +56,32 @@ export class AuthenticationContext {
         }
 
         // Check if token is in the cache
-        let cacheResult = this.tokenCache.loadFromCache({
+        let result = this.tokenCache.loadFromCache({
             authority: this.authority,
             resource: resource,
             clientId: clientId,
             subjectType: TokenSubjectType.Client,
+            extendedLifeTimeEnabled: false,
         });
 
         // We found a valid token in the cache
-        if (cacheResult && cacheResult.result) {
-            return cacheResult.result;
+        if (result && result.result && result.result.accessToken) {
+            console.log("acquireTokenAsync. Found valid access token in cache");
+            return result.result;
         }
 
-        let result: AuthenticationResult = null;
         // Token is expired, but we have a refresh token
-        if (cacheResult) {
-            result = await Utils.getAuthTokenByRefreshTokenAsync(
+        if (result && result.refreshToken) {
+            result = await Utils.refreshAccessTokenAsync(
                 this.accessTokenUrl,
                 this.authority,
                 resource,
                 clientId,
-                cacheResult.refreshToken,
+                result,
                 this.tokenCache);
 
-            if (result && result.accessToken) {
-                return result;
+            if (result && result.result && result.result.accessToken) {
+                return result.result;
             }
         }
         
@@ -95,6 +97,6 @@ export class AuthenticationContext {
             scope,
             this.tokenCache);
 
-        return result;
+        return result.result;
     }
 }
