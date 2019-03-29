@@ -13,6 +13,9 @@ export interface PostResponse {
 }
 
 export class Utils {
+
+    public static guidEmpty = "00000000-0000-0000-0000-000000000000";
+
     public static tokenTimeToJsDate(time: string) {
 
         if (!time) {
