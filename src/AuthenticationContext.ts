@@ -55,7 +55,7 @@ export class AuthenticationContext {
         return this.acquireTokenAsync(tenant, resource, scope, clientId, redirectUri, true);
     }
 
-    public async getCachedResult(resource: string, clientId: string) {
+    public getCachedResult(resource: string, clientId: string): AuthenticationResult {
         // Check if token is in the cache
         const result = this.tokenCache.loadFromCache({
             authority: this.authority,
