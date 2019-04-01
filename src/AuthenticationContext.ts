@@ -66,7 +66,6 @@ export class AuthenticationContext {
 
         // We found a valid token in the cache
         if (result && result.result && result.result.accessToken) {
-            console.log("acquireTokenAsync. Found valid access token in cache");
             return result.result;
         }
 

@@ -90,7 +90,6 @@ export class TokenCache extends EventEmitter {
         const key = new TokenCacheKey(authority, resource, clientId, subjectType, uniqueId, displayableId);
         const stringKey = key.getStringKey();
         this.tokenCacheDictionary[stringKey] = result;
-        console.log(`Updated token cache with key ${stringKey}`);
 
         // TODO: UpdateCachedMrrtRefreshTokens?
         this.hasStateChanged = true;
@@ -110,11 +109,9 @@ export class TokenCache extends EventEmitter {
 
             if (key.authority !== cacheQueryData.authority) {
                 // Cross-tenant refresh token found in the cache
-                console.log("Cross-tenant refresh token found in the cache");
                 result.result.accessToken = null;
             } else if (expiredByExpiresOn && !cacheQueryData.extendedLifeTimeEnabled) {
                 // An expired or near expiry token was found in the cache
-                console.log("An expired or near expiry token was found in the cache");
                 result.result.accessToken = null;
             } else if (!key.resourceEquals(cacheQueryData.resource)) {
 
@@ -152,17 +149,9 @@ export class TokenCache extends EventEmitter {
         } else {
             // No matching token was found in the cache
             console.log(`No matching token was found in the cache`);
-            console.log(this.tokenCacheDictionary);
-            console.log(cacheQueryData);
         }
 
         return result;
-    }
-
-    public logCache(): void {
-        console.log("***** CACHE START *****");
-        console.log(this.tokenCacheDictionary);
-        console.log("***** CACHE END *****");
     }
 
     private queryCache(
@@ -177,12 +166,6 @@ export class TokenCache extends EventEmitter {
         for (const key of keys) {
             const entry = this.tokenCacheDictionary[key];
             const cacheKey = TokenCacheKey.fromStringKey(key);
-
-            console.log(`Authority: ${(!authority || cacheKey.authority === authority)}`);
-            console.log(`clientId: ${(!clientId || cacheKey.clientIdEquals(clientId))}`);
-            console.log(`uniqueId: ${(!uniqueId || cacheKey.uniqueId === uniqueId)}`);
-            console.log(`displayableId: ${(!displayableId || cacheKey.displayableIdEquals(displayableId))}`);
-            console.log(`tokenSubjectType: ${cacheKey.tokenSubjectType === subjectType}`);
 
             if ((!authority || cacheKey.authority === authority)
                 && (!clientId || cacheKey.clientIdEquals(clientId))

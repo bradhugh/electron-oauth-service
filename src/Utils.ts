@@ -44,15 +44,10 @@ export class Utils {
         });
 
         if (postResponse.statusCode !== 200) {
-            console.log("FAILED RESPONSE:");
-            console.log(postResponse.body.toString('utf8'));
             throw new Error(`Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
         }
 
         const responseString = postResponse.body.toString('utf8');
-        
-        console.log("****POST RESPONSE****");
-        console.log(responseString);
 
         const response: OAuth2Response = JSON.parse(responseString);
 

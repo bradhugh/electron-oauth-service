@@ -31,13 +31,6 @@ export class TokenCacheKey {
         const displayableId = match[5];
         const tokenSubjectType: TokenSubjectType = parseInt(match[6]);
 
-        console.log(`fromStringKey:
-            Authority: ${authority}
-            resourceId ${resourceId}
-            clientId: ${clientId}
-            uniqueId: ${uniqueId}
-            tokenSubjectType: ${tokenSubjectType}`);
-
         return new TokenCacheKey(
             authority,
             resourceId,
