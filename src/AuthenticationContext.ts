@@ -44,12 +44,24 @@ export class AuthenticationContext {
         private redirectUri: string
     ) {}
 
+    public async acquireTokenSilentAsync(
+        tenant: string,
+        resource: string,
+        scope: string,
+        clientId: string,
+        redirectUri: string = null): Promise<AuthenticationResult> {
+
+        // Acquire token silently
+        return this.acquireTokenAsync(tenant, resource, scope, clientId, redirectUri, true);
+    }
+
     public async acquireTokenAsync(
         tenant: string,
         resource: string,
         scope: string = "user_impersonation",
         clientId: string,
-        redirectUri: string = null): Promise<AuthenticationResult> {
+        redirectUri: string = null,
+        silent = false): Promise<AuthenticationResult> {
 
         if (!redirectUri) {
             redirectUri = this.redirectUri;
@@ -83,6 +95,11 @@ export class AuthenticationContext {
                 return result.result;
             }
         }
+
+        // If they specified silent, we can't do the interactive
+        if (silent) {
+            return result.result;
+        }
         
         // Get the token interactively if needed
         result = await Utils.getAuthTokenInteractiveAsync(
@@ -97,5 +114,9 @@ export class AuthenticationContext {
             this.tokenCache);
 
         return result.result;
+    }
+
+    public clearCache(): void {
+        this.tokenCache.clear();
     }
 }
