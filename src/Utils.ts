@@ -114,11 +114,23 @@ export class Utils {
         try {
             const response = await provider.perform(authWindow);
 
+            const expiresInSeconds = parseInt(response.expires_in.toString());
+            let extExpiresInSeconds = parseInt(response.ext_expires_in.toString());
+
+            if (extExpiresInSeconds < expiresInSeconds) {
+                console.log(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}). Set ExpiresIn as ExtendedExpiresIn`);
+                extExpiresInSeconds = expiresInSeconds;
+            }
+
+            const now = new Date();
+            const expiresIn = new Date(now.getTime() + (expiresInSeconds * 1000));
+            const extExpiresIn = new Date(now.getTime() + (extExpiresInSeconds * 1000));
+
             const result = new AuthenticationResult(
                 response.token_type,
                 response.access_token,
-                Utils.tokenTimeToJsDate(response.expires_on),
-                null); // TODO: ext_expires_in
+                expiresIn,
+                extExpiresIn);
 
             const exResult = new AuthenticationResultEx();
             exResult.result = result;
