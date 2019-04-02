@@ -1,4 +1,4 @@
-class Pair<T1, T2> {
+export class Pair<T1, T2> {
     private _key: T1;
     private _value: T2;
 

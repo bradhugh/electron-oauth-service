@@ -4,6 +4,7 @@ import { CacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { EventEmitter } from "events";
 import { TokenCacheNotificationArgs } from "./TokenCacheNotificationArgs";
+import { Pair } from "./Pair";
 
 export class TokenCache extends EventEmitter {
 
