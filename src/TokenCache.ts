@@ -168,56 +168,65 @@ export class TokenCache extends EventEmitter {
 
     public loadFromCache(cacheQueryData: CacheQueryData) {
 
-        let result: AuthenticationResultEx = null;
+        let resultEx: AuthenticationResultEx = null;
         const kvp = this.loadSingleItemFromCache(cacheQueryData);
         if (kvp) {
             const key = kvp.key;
-            result = kvp.value.clone();
+            resultEx = kvp.value.clone();
             
             const now = new Date();
-            const expiredByExpiresOn = result.result.expiresOn.getTime() <= now.getTime() + (1000 * 60 * 5);
-            const expiredByExpiresOnExtended = result.result.extendedExpiresOn.getTime() <= now.getTime();
+            const tokenNearExpiry = resultEx.result.expiresOn.getTime() <= now.getTime() + (1000 * 60 * TokenCache.expirationMarginInMinutes);
+            const tokenExtendedLifeTimeExpired = resultEx.result.extendedExpiresOn.getTime() <= now.getTime();
 
             if (key.authority !== cacheQueryData.authority) {
-                // Cross-tenant refresh token found in the cache
+                // this is a cross-tenant result. use RT only
+                resultEx.result.accessToken = null;
                 console.log("Cross-tenant refresh token found in the cache");
-                result.result.accessToken = null;
-            } else if (expiredByExpiresOn && !cacheQueryData.extendedLifeTimeEnabled) {
+            } else if (tokenNearExpiry && !cacheQueryData.extendedLifeTimeEnabled) {
                 // An expired or near expiry token was found in the cache
+                resultEx.result.accessToken = null;
                 console.log("An expired or near expiry token was found in the cache");
-                result.result.accessToken = null;
             } else if (!key.resourceEquals(cacheQueryData.resource)) {
 
                 // Multi resource refresh token for resource '{0}' will be used to acquire token for '{1}'"
-                const tempResult = new AuthenticationResultEx();
-                tempResult.result = new AuthenticationResult(null, null, new Date(-8640000000000000));
-                tempResult.refreshToken = result.refreshToken;
-				tempResult.resourceInResponse = result.resourceInResponse;
-				tempResult.result.updateTenantAndUserInfo(result.result.tenantId, result.result.idToken, result.result.userInfo);
-				result = tempResult;
-            } else if ((!expiredByExpiresOnExtended && cacheQueryData.extendedLifeTimeEnabled) && expiredByExpiresOn) {
-                // The extendedLifeTime is enabled and a stale AT with extendedLifeTimeEnabled is returned
-                result.result.extendedLifeTimeToken = true;
-				result.result.expiresOn = result.result.extendedExpiresOn;
-            } else if (expiredByExpiresOnExtended) {
+                const newResultEx = new AuthenticationResultEx();
+                newResultEx.result = new AuthenticationResult(null, null, new Date(-8640000000000000));
+                newResultEx.refreshToken = resultEx.refreshToken;
+                newResultEx.resourceInResponse = resultEx.resourceInResponse;
+                
+                newResultEx.result.updateTenantAndUserInfo(resultEx.result.tenantId, resultEx.result.idToken,
+                    resultEx.result.userInfo);
+				resultEx = newResultEx;
+            } else if ((!tokenExtendedLifeTimeExpired && cacheQueryData.extendedLifeTimeEnabled) && tokenNearExpiry) {
+                resultEx.result.extendedLifeTimeToken = true;
+                resultEx.result.expiresOn = resultEx.result.extendedExpiresOn;
+                
+                console.log("The extendedLifeTime is enabled and a stale AT with extendedLifeTimeEnabled is returned.");
+            } else if (tokenExtendedLifeTimeExpired) {
                 // The AT has expired its ExtendedLifeTime
-                result.result.accessToken = null;
+                resultEx.result.accessToken = null;
+
+                console.log("The AT has expired its ExtendedLifeTime")
             } else {
-                const millisecondsLeft = result.result.expiresOn.getTime() - now.getTime();
+                const millisecondsLeft = resultEx.result.expiresOn.getTime() - now.getTime();
                 const minutesLeft = millisecondsLeft / 1000 / 60;
                 console.log(`${minutesLeft.toFixed(2)} minutes left until token in cache expires`);
             }
 
-            if (!result.result.accessToken && !result.refreshToken) {
+            if (!resultEx.result.accessToken && !resultEx.refreshToken) {
                 // An old item was removed from the cache
                 this.tokenCacheDictionary.delete(key);
+
+                console.log("An old item was removed from the cache");
+
                 this.hasStateChanged = true;
-                result = null;
+                resultEx = null;
             }
 
-            if (result !== null) {
-                result.result.authority = key.authority;
-                // A matching item (access token or refresh token or both) was found in the cache
+            if (resultEx !== null) {
+                resultEx.result.authority = key.authority;
+                
+                console.log("A matching item (access token or refresh token or both) was found in the cache");
             }
         } else {
             // No matching token was found in the cache
@@ -226,7 +235,7 @@ export class TokenCache extends EventEmitter {
             console.log(cacheQueryData);
         }
 
-        return result;
+        return resultEx;
     }
 
     public logCache(): void {
