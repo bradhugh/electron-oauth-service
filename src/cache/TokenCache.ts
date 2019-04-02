@@ -95,7 +95,7 @@ export class TokenCache extends EventEmitter {
         this.hasStateChanged = true;
     }
 
-    public loadFromCache(cacheQueryData: CacheQueryData) {
+    public loadFromCache(cacheQueryData: CacheQueryData): AuthenticationResultEx {
 
         let result: AuthenticationResultEx = null;
         const kvp = this.loadSingleItemFromCache(cacheQueryData);

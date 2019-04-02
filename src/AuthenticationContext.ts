@@ -57,7 +57,7 @@ export class AuthenticationContext {
 
     public getCachedResult(resource: string, clientId: string): AuthenticationResult {
         // Check if token is in the cache
-        const result = this.tokenCache.loadFromCache({
+        let exResult = this.tokenCache.loadFromCache({
             authority: this.authority,
             resource: resource,
             clientId: clientId,
@@ -65,7 +65,13 @@ export class AuthenticationContext {
             extendedLifeTimeEnabled: false,
         });
 
-        return result.result;
+        // If we actually found a cache entry, return it
+        if (exResult) {
+            return exResult.result;
+        }
+
+        // No cache entry, so build an empty result
+        return new AuthenticationResult(null, null, null);
     }
 
     public async acquireTokenAsync(
