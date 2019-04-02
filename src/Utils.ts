@@ -1,9 +1,10 @@
 import { net, BrowserWindow } from "electron";
 import * as querystring from "querystring";
 import { OAuth2Response, OAuth2Config, OAuth2Provider } from "electron-oauth-helper";
-import { TokenCache, TokenSubjectType } from "./TokenCache";
+import { TokenCache } from "./TokenCache";
 import { AuthenticationResult, AuthenticationResultEx } from "./AuthenticationResult";
 import { TokenCacheItem } from "./TokenCacheItem";
+import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 
 export interface PostResponse {
     headers: any;

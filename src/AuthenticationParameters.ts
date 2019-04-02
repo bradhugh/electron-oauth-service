@@ -56,7 +56,8 @@ export class AuthenticationParameters {
                     throw serviceEx;
                 }
 
-                authParams = AuthenticationParameters.createFromUnauthorizedResponseCommon(response);
+                throw new Error("Not implemented");
+                //authParams = AuthenticationParameters.createFromUnauthorizedResponseCommon(response);
             } else {
                 // Didn't expect this kind of error here
                 throw error;
@@ -75,7 +76,8 @@ export class AuthenticationParameters {
         if (response.statusCode == 401)
         {
             if (response.headers[AuthenticationParameters.authenticateHeader]) {
-                authParams = this.createFromResponseAuthenticateHeader(response.headers.GetValues(AuthenticateHeader).FirstOrDefault());
+                throw new Error("Not implemented");
+                // authParams = this.createFromResponseAuthenticateHeader(response.headers.GetValues(AuthenticateHeader).FirstOrDefault());
             } else {
                 var ex = new Error("AdalErrorMessage.MissingAuthenticateHeader");
                 CoreLoggerBase.default.errorExPii(ex);

@@ -1,4 +1,5 @@
-import { TokenCache, TokenSubjectType } from "../TokenCache";
+import { TokenCache } from "../TokenCache";
+import { TokenSubjectType } from "../internal/cache/TokenCacheKey";
 
 export class ClientKey {
     constructor(public clientId: string) {}

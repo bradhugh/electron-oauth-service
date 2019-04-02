@@ -1,6 +1,6 @@
 import { Utils } from "./Utils";
-import { TokenCache, TokenSubjectType } from "./TokenCache";
-import { AuthenticationResultEx } from "./AuthenticationResult";
+import { TokenCache } from "./TokenCache";
+import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 
 export class UserInfo {
 }
