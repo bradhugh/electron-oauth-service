@@ -1,16 +1,9 @@
 import { TokenCacheItem } from "./TokenCacheItem";
-import { AuthenticationResultEx, AuthenticationResult } from "../AuthenticationResult";
-import { TokenCacheKey } from "./TokenCacheKey";
-import { CacheQueryData } from "./CacheQueryData";
+import { AuthenticationResultEx, AuthenticationResult } from "./AuthenticationResult";
+import { CacheQueryData } from "./internal/cache/CacheQueryData";
+import { TokenCacheKey } from "./internal/cache/TokenCacheKey";
 import { EventEmitter } from "events";
-
-export class TokenCacheNotificationArgs {
-    tokenCache: TokenCache;
-    clientId: string;
-    resource: string;
-    uniqueId: string;
-    displayableId: string;
-}
+import { TokenCacheNotificationArgs } from "./TokenCacheNotificationArgs";
 
 export enum TokenSubjectType {
     User,

@@ -1,4 +1,4 @@
-import { TokenSubjectType } from "./TokenCache";
+import { TokenSubjectType } from "../../TokenCache";
 
 export interface CacheQueryData {
     authority: string;

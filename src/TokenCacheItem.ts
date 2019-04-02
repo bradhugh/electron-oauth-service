@@ -1,6 +1,6 @@
 import { TokenSubjectType } from "./TokenCache";
-import { AuthenticationResult } from "../AuthenticationContext";
-import { TokenCacheKey } from "./TokenCacheKey";
+import { AuthenticationResult } from "./AuthenticationContext";
+import { TokenCacheKey } from "./internal/cache/TokenCacheKey";
 
 export class TokenCacheItem {
     public authority: string;
