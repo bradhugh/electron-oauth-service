@@ -16,12 +16,43 @@ export class AuthenticationContext {
         private redirectUri: string,
     ) {}
 
+    public async acquireTokenSilentAsync(
+        tenant: string,
+        resource: string,
+        scope: string,
+        clientId: string,
+        redirectUri: string = null): Promise<AuthenticationResult> {
+
+        // Acquire token silently
+        return this.acquireTokenAsync(tenant, resource, scope, clientId, redirectUri, true);
+    }
+
+    public getCachedResult(resource: string, clientId: string): AuthenticationResult {
+        // Check if token is in the cache
+        const exResult = this.tokenCache.loadFromCache({
+            authority: this.authority,
+            resource,
+            clientId,
+            subjectType: TokenSubjectType.Client,
+            extendedLifeTimeEnabled: false,
+        });
+
+        // If we actually found a cache entry, return it
+        if (exResult) {
+            return exResult.result;
+        }
+
+        // No cache entry, so build an empty result
+        return new AuthenticationResult(null, null, null);
+    }
+
     public async acquireTokenAsync(
         tenant: string,
         resource: string,
         scope: string = "user_impersonation",
         clientId: string,
-        redirectUri: string = null): Promise<AuthenticationResult> {
+        redirectUri: string = null,
+        silent = false): Promise<AuthenticationResult> {
 
         if (!redirectUri) {
             redirectUri = this.redirectUri;
@@ -38,7 +69,6 @@ export class AuthenticationContext {
 
         // We found a valid token in the cache
         if (result && result.result && result.result.accessToken) {
-            console.log("acquireTokenAsync. Found valid access token in cache");
             return result.result;
         }
 
@@ -57,6 +87,11 @@ export class AuthenticationContext {
             }
         }
 
+        // If they specified silent, we can't do the interactive
+        if (silent) {
+            return result.result;
+        }
+
         // Get the token interactively if needed
         result = await Utils.getAuthTokenInteractiveAsync(
             this.authority,
@@ -70,5 +105,9 @@ export class AuthenticationContext {
             this.tokenCache);
 
         return result.result;
+    }
+
+    public clearCache(): void {
+        this.tokenCache.clear();
     }
 }
