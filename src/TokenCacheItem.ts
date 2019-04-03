@@ -1,4 +1,4 @@
-import { AuthenticationResult } from "./AuthenticationContext";
+import { AuthenticationResult } from "./AuthenticationResult";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
 
 export class TokenCacheItem {
@@ -40,7 +40,7 @@ export class TokenCacheItem {
             && key.clientIdEquals(this.clientId)
             && key.tokenSubjectType === this.tokenSubjectType
             && key.uniqueId === this.uniqueId) {
-            
+
             return key.displayableIdEquals(this.displayableId);
         }
 

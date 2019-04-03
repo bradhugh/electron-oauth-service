@@ -1,37 +1,9 @@
-import { Utils } from "./Utils";
-import { TokenCache } from "./TokenCache";
+import { AuthenticationResult } from "./AuthenticationResult";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
+import { TokenCache } from "./TokenCache";
+import { Utils } from "./Utils";
 
-export class UserInfo {
-}
-
-export class AuthenticationResult {
-    public accessToken: string;
-    public accessTokenType: string;
-    public authority: string;
-    public expiresOn: Date;
-    public extendedExpiresOn: Date;
-    public extendedLifeTimeToken: boolean;
-    public idToken: string;
-    public tenantId: string;
-    public userInfo: UserInfo;
-
-    constructor(
-        accessTokenType: string,
-        accessToken: string,
-        expiresOn: Date,
-        extendedExpiresOn?: Date) {
-
-        this.accessTokenType = accessTokenType;
-        this.accessToken = accessToken;
-        this.expiresOn = expiresOn;
-        if (extendedExpiresOn) {
-            this.extendedExpiresOn = extendedExpiresOn;
-        } else {
-            this.extendedExpiresOn = expiresOn;
-        }
-    }
-}
+// tslint:disable: no-console
 
 export class AuthenticationContext {
 
@@ -41,7 +13,7 @@ export class AuthenticationContext {
         private authority: string,
         private authorizeUrl: string,
         private accessTokenUrl: string,
-        private redirectUri: string
+        private redirectUri: string,
     ) {}
 
     public async acquireTokenAsync(
@@ -58,8 +30,8 @@ export class AuthenticationContext {
         // Check if token is in the cache
         let result = this.tokenCache.loadFromCache({
             authority: this.authority,
-            resource: resource,
-            clientId: clientId,
+            resource,
+            clientId,
             subjectType: TokenSubjectType.Client,
             extendedLifeTimeEnabled: false,
         });
@@ -84,7 +56,7 @@ export class AuthenticationContext {
                 return result.result;
             }
         }
-        
+
         // Get the token interactively if needed
         result = await Utils.getAuthTokenInteractiveAsync(
             this.authority,

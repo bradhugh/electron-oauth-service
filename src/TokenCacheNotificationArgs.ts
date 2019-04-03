@@ -1,9 +1,9 @@
 import { TokenCache } from "./TokenCache";
 
 export class TokenCacheNotificationArgs {
-    tokenCache: TokenCache;
-    clientId: string;
-    resource: string;
-    uniqueId: string;
-    displayableId: string;
+    public tokenCache: TokenCache;
+    public clientId: string;
+    public resource: string;
+    public uniqueId: string;
+    public displayableId: string;
 }

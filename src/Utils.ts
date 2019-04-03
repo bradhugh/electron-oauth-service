@@ -1,12 +1,14 @@
-import { net, BrowserWindow } from "electron";
+import { BrowserWindow, net } from "electron";
+import { OAuth2Config, OAuth2Provider, OAuth2Response } from "electron-oauth-helper";
 import * as querystring from "querystring";
-import { OAuth2Response, OAuth2Config, OAuth2Provider } from "electron-oauth-helper";
-import { TokenCache } from "./TokenCache";
-import { AuthenticationResult, AuthenticationResultEx } from "./AuthenticationResult";
-import { TokenCacheItem } from "./TokenCacheItem";
+import { AuthenticationResult } from "./AuthenticationResult";
+import { AuthenticationResultEx } from "./AuthenticationResultEx";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
+import { TokenCache } from "./TokenCache";
 
-export interface PostResponse {
+// tslint:disable: no-console
+
+export interface IPostResponse {
     headers: any;
     statusCode: number;
     statusMessage: string;
@@ -24,10 +26,10 @@ export class Utils {
         }
 
         // The date is represented as the number of seconds from 1970-01-01T0:0:0Z UTC
-        const secs = parseInt(time);
+        const secs = parseInt(time, 10);
         const jan11970 = Date.UTC(1970, 1, 1, 0, 0, 0, 0);
         const date = new Date(jan11970 + (secs * 1000));
-        
+
         return date;
     }
 
@@ -43,18 +45,19 @@ export class Utils {
             grant_type: "refresh_token",
             refresh_token: resultEx.refreshToken,
             scope: "openid",
-            resource: resource,
+            resource,
             client_id: clientId,
         });
 
         if (postResponse.statusCode !== 200) {
             console.log("FAILED RESPONSE:");
-            console.log(postResponse.body.toString('utf8'));
-            throw new Error(`Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
+            console.log(postResponse.body.toString("utf8"));
+            throw new Error(
+                `Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
         }
 
-        const responseString = postResponse.body.toString('utf8');
-        
+        const responseString = postResponse.body.toString("utf8");
+
         console.log("****POST RESPONSE****");
         console.log(responseString);
 
@@ -67,7 +70,8 @@ export class Utils {
             null); // TODO: ext_expires_in
 
         if (!response.refresh_token) {
-            console.log("Refresh token was missing from the token refresh response, so the refresh token in the request is returned instead");
+            console.log("Refresh token was missing from the token refresh response, " +
+                "so the refresh token in the request is returned instead");
         } else {
             resultEx.refreshToken = response.refresh_token;
         }
@@ -78,7 +82,7 @@ export class Utils {
         return resultEx;
     }
 
-    //private async sendTokenRequestByRefreshTokenAsync(refreshToken: string): AuthenticationResultEx {}
+    // private async sendTokenRequestByRefreshTokenAsync(refreshToken: string): AuthenticationResultEx {}
 
     public static async getAuthTokenInteractiveAsync(
         authority: string,
@@ -92,7 +96,7 @@ export class Utils {
         tokenCache: TokenCache): Promise<AuthenticationResultEx> {
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
-            access_token_url:accessTokenUrl,
+            access_token_url: accessTokenUrl,
             client_id: clientId,
             scope: `https://${tenantId}/${resourceId}/${scope}`,
             response_type: "code",
@@ -106,7 +110,7 @@ export class Utils {
             height: 800,
             webPreferences: {
               nodeIntegration: false, // We recommend disabling nodeIntegration for security.
-              contextIsolation: true // We recommend enabling contextIsolation for security.
+              contextIsolation: true, // We recommend enabling contextIsolation for security.
               // see https://github.com/electron/electron/blob/master/docs/tutorial/security.md
             },
         });
@@ -114,11 +118,12 @@ export class Utils {
         try {
             const response = await provider.perform(authWindow);
 
-            const expiresInSeconds = parseInt(response.expires_in.toString());
-            let extExpiresInSeconds = parseInt(response.ext_expires_in.toString());
+            const expiresInSeconds = parseInt(response.expires_in.toString(), 10);
+            let extExpiresInSeconds = parseInt(response.ext_expires_in.toString(), 10);
 
             if (extExpiresInSeconds < expiresInSeconds) {
-                console.log(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}). Set ExpiresIn as ExtendedExpiresIn`);
+                console.log(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}).` +
+                    "Set ExpiresIn as ExtendedExpiresIn");
                 extExpiresInSeconds = expiresInSeconds;
             }
 
@@ -139,7 +144,7 @@ export class Utils {
 
             // REVIEW: What should TokenSubjectType be?
             tokenCache.storeToCache(exResult, authority, resourceId, clientId, TokenSubjectType.Client);
-            
+
             return exResult;
 
           } finally {
@@ -148,7 +153,7 @@ export class Utils {
           }
     }
 
-    public static postRequestAsync(url: string, parameters: Object): Promise<PostResponse> {
+    public static postRequestAsync(url: string, parameters: object): Promise<IPostResponse> {
 
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify(parameters);
@@ -158,35 +163,35 @@ export class Utils {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
-                    "Content-Length": Buffer.byteLength(postData)
-                }
+                    "Content-Length": Buffer.byteLength(postData),
+                },
             });
 
-            request.on("response", response => {
+            request.on("response", (response) => {
 
                 const datas: Buffer[] = [];
-        
-                response.on("data", chunk => {
+
+                response.on("data", (chunk) => {
                     datas.push(chunk);
                 });
-        
+
                 response.on("end", () => {
-                    const body = Buffer.concat(datas)
+                    const body = Buffer.concat(datas);
                     const resp = {
                         headers: response.headers,
                         statusCode: response.statusCode,
                         statusMessage: response.statusMessage,
-                        body: body,
-                    }
+                        body,
+                    };
 
                     resolve(resp);
                 });
-        
+
                 response.on("error", (error: Error) => {
-                    reject(error)
+                    reject(error);
                 });
             });
-        
+
             request.write(postData, "utf8");
             request.end();
         });
@@ -209,6 +214,6 @@ export class Utils {
     }
 
     public static escapeRegExp(input: string): string {
-        return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 }
