@@ -25,7 +25,7 @@ export class TokenCache extends EventEmitter {
 
     private $hasStateChanged = false;
 
-    private tokenCacheDictionary = new Map<TokenCacheKey, AuthenticationResultEx>();
+    private tokenCacheDictionary = new Map<string, AuthenticationResultEx>();
 
     // Constructor that receives the optional state of the cache
     constructor(state?: Buffer) {
@@ -55,7 +55,7 @@ export class TokenCache extends EventEmitter {
 
     // Gets the nunmber of items in the cache.
     get count(): number {
-        return this.tokenCacheDictionary.values.length;
+        return this.tokenCacheDictionary.size;
     }
 
     /// <summary>
@@ -119,16 +119,19 @@ export class TokenCache extends EventEmitter {
         this.emit("beforeAccess", args);
         this.emit("beforeWrite", args);
 
-        let toRemoveKey: TokenCacheKey = null;
+        let toRemoveStringKey: string = null;
 
-        this.tokenCacheDictionary.forEach((_entry, key) => {
+        for (const stringKey of this.tokenCacheDictionary.keys()) {
+            const key = TokenCacheKey.fromStringKey(stringKey);
+
             if (item.match(key)) {
-                toRemoveKey = key;
+                toRemoveStringKey = stringKey;
+                break;
             }
-        });
+        }
 
-        if (toRemoveKey) {
-            this.tokenCacheDictionary.delete(toRemoveKey);
+        if (toRemoveStringKey) {
+            this.tokenCacheDictionary.delete(toRemoveStringKey);
             // Default.Logger.Information(null, "One item removed successfully");
         } else {
             // CallState.Default.Logger.Information(null, "Item not Present in the Cache");
@@ -172,7 +175,7 @@ export class TokenCache extends EventEmitter {
         this.emit("beforeWrite", args);
 
         const key = new TokenCacheKey(authority, resource, clientId, subjectType, uniqueId, displayableId);
-        this.tokenCacheDictionary.set(key, result);
+        this.tokenCacheDictionary.set(key.toStringKey(), result);
 
         // TODO: UpdateCachedMrrtRefreshTokens?
         this.hasStateChanged = true;
@@ -228,7 +231,7 @@ export class TokenCache extends EventEmitter {
 
             if (!resultEx.result.accessToken && !resultEx.refreshToken) {
                 // An old item was removed from the cache
-                this.tokenCacheDictionary.delete(key);
+                this.tokenCacheDictionary.delete(key.toStringKey());
 
                 console.log("An old item was removed from the cache");
 
@@ -265,7 +268,9 @@ export class TokenCache extends EventEmitter {
         displayableId: string): Array<Pair<TokenCacheKey, AuthenticationResultEx>> {
 
         const results: Array<Pair<TokenCacheKey, AuthenticationResultEx>> = [];
-        this.tokenCacheDictionary.forEach((entry, cacheKey) => {
+        for (const stringKey of this.tokenCacheDictionary.keys()) {
+            const cacheKey = TokenCacheKey.fromStringKey(stringKey);
+
             console.log(`Authority: ${(!authority || cacheKey.authority === authority)}`);
             console.log(`clientId: ${(!clientId || cacheKey.clientIdEquals(clientId))}`);
             console.log(`uniqueId: ${(!uniqueId || cacheKey.uniqueId === uniqueId)}`);
@@ -281,9 +286,11 @@ export class TokenCache extends EventEmitter {
                 // TODO: Do I need assertionHash?
                 console.log("queryCache returning cache entry with key:");
                 console.log(cacheKey);
-                results.push(new Pair<TokenCacheKey, AuthenticationResultEx>(cacheKey, entry));
+
+                const authResultEx = this.tokenCacheDictionary.get(stringKey);
+                results.push(new Pair<TokenCacheKey, AuthenticationResultEx>(cacheKey, authResultEx));
             }
-        });
+        }
 
         return results;
     }
