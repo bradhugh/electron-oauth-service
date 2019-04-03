@@ -1,5 +1,5 @@
-import { AdalLogger } from "./AdalLogger";
 import { Utils } from "../Utils";
+import { AdalLogger } from "./AdalLogger";
 
 export interface ICoreLogger {
     correlationId: string;

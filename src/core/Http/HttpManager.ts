@@ -1,8 +1,10 @@
 import { RequestContext } from "../RequestContext";
 import { HttpResponse } from "./HttpResponse";
 
-import * as querystring from "querystring";
 import { net } from "electron";
+import * as querystring from "querystring";
+
+// tslint:disable: max-classes-per-file
 
 export interface IHttpManager {
     sendPostAsync(
@@ -45,7 +47,7 @@ export class HttpManager implements IHttpManager {
         const postData = querystring.stringify(bodyParameters);
         headers["content-type"] = "application/x-www-form-urlencoded";
         headers["content-length"] = Buffer.byteLength(postData).toString();
-        
+
         const resp = await this.requestCommonAsync(
             endpoint,
             "POST",
@@ -116,25 +118,25 @@ export class HttpManager implements IHttpManager {
 
             const request = net.request({
                 url,
-                method: method,
-                headers: headers
+                method,
+                headers,
             });
 
-            request.on("response", response => {
+            request.on("response", (response) => {
 
                 const datas: Buffer[] = [];
-        
-                response.on("data", chunk => {
+
+                response.on("data", (chunk) => {
                     datas.push(chunk);
                 });
-        
+
                 response.on("end", () => {
-                    const body = Buffer.concat(datas)
+                    const bodyBuffer = Buffer.concat(datas);
                     const resp: HttpResponse = {
                         headers: response.headers,
                         statusCode: response.statusCode,
-                        body: body.toString('utf8'),
-                    }
+                        body: bodyBuffer.toString("utf8"),
+                    };
 
                     if (response.statusCode >= 400) {
                         return reject(new HttpError(`HTTP request failed with status ${response.statusCode}`, resp));
@@ -142,12 +144,12 @@ export class HttpManager implements IHttpManager {
 
                     return resolve(resp);
                 });
-        
+
                 response.on("error", (error: Error) => {
-                    return reject(error)
+                    return reject(error);
                 });
             });
-        
+
             if (body) {
                 request.write(body, "utf8");
             }

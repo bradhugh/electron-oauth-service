@@ -1,5 +1,5 @@
-import { InstanceDiscovery } from "../instance/InstanceDiscovery";
 import { AuthenticationParameters } from "../AuthenticationParameters";
+import { InstanceDiscovery } from "../instance/InstanceDiscovery";
 
 export interface IServiceBundle {
     instanceDiscovery: InstanceDiscovery;

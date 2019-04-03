@@ -1,63 +1,65 @@
 import { ICoreLogger } from "./CoreLoggerBase";
 
+// tslint:disable: no-console
+
 export class AdalLogger implements ICoreLogger {
     public piiLoggingEnabled: boolean;
 
     constructor(public correlationId: string) {}
 
-    error(messageScrubbed: string): void {
+    public error(messageScrubbed: string): void {
         console.log(messageScrubbed);
     }
 
-    errorPii(messageWithPii: string): void {
+    public errorPii(messageWithPii: string): void {
         console.log(messageWithPii);
     }
 
-    errorExPii(exWithPii: Error): void {
+    public errorExPii(exWithPii: Error): void {
         console.log(exWithPii);
     }
 
-    errorExPiiWithPrefix(exWithPii: Error, prefix: string): void {
+    public errorExPiiWithPrefix(exWithPii: Error, prefix: string): void {
         console.log(exWithPii);
     }
 
-    warning(messageScrubbed: string): void {
+    public warning(messageScrubbed: string): void {
         console.log(messageScrubbed);
     }
 
-    warningPii(messageWithPii: string): void {
+    public warningPii(messageWithPii: string): void {
         console.log(messageWithPii);
     }
 
-    warningExPii(exWithPii: Error): void {
+    public warningExPii(exWithPii: Error): void {
         console.log(exWithPii);
     }
 
-    warningExPiiWithPrefix(exWithPii: Error, prefix: string): void {
+    public warningExPiiWithPrefix(exWithPii: Error, prefix: string): void {
         console.log(exWithPii);
     }
 
-    info(messageScrubbed: string): void {
+    public info(messageScrubbed: string): void {
         console.log(messageScrubbed);
     }
 
-    infoPii(messageWithPii: string): void {
+    public infoPii(messageWithPii: string): void {
         console.log(messageWithPii);
     }
 
-    infoExPii(exWithPii: Error): void {
+    public infoExPii(exWithPii: Error): void {
         console.log(exWithPii);
     }
 
-    infoExPiiWithPrefix(exWithPii: Error, prefix: string): void {
+    public infoExPiiWithPrefix(exWithPii: Error, prefix: string): void {
         console.log(exWithPii);
     }
 
-    verbose(messageScrubbed: string): void {
+    public verbose(messageScrubbed: string): void {
         console.log(messageScrubbed);
     }
 
-    verbosePii(messageWithPii: string): void {
+    public verbosePii(messageWithPii: string): void {
         console.log(messageWithPii);
     }
 }
