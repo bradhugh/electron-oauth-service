@@ -22,11 +22,13 @@
   },
   "homepage": "https://github.com/bradhugh/electron-oauth-service#readme",
   "dependencies": {
-    "electron-oauth-helper": "git://github.com/bradhugh/electron-oauth-helper.git#fixes"
+    "electron-oauth-helper": "git://github.com/bradhugh/electron-oauth-helper.git#fixes",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/electron": "^1.6.10",
     "@types/node": "^11.12.0",
+    "@types/uuid": "^3.4.4",
     "tslint": "^5.15.0",
     "typescript": "^3.3.4000"
   }

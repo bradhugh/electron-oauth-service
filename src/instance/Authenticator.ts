@@ -1,5 +1,7 @@
 import { RequestContext } from "../core/RequestContext";
 import { IServiceBundle } from "../core/ServiceBundle";
+import { CallState } from "../internal/CallState";
+import { Utils } from "../Utils";
 import { InstanceDiscovery } from "./InstanceDiscovery";
 
 export enum AuthorityType {
@@ -17,7 +19,7 @@ export class Authenticator {
         return uri;
     }
 
-    public static DetectAuthorityType(authority: string): AuthorityType {
+    public static detectAuthorityType(authority: string): AuthorityType {
         if (!authority) {
             throw new Error("authority cannot be null or empty");
         }
@@ -42,6 +44,8 @@ export class Authenticator {
     private static isAdfsAuthority(firstPath: string) {
         return firstPath.toLowerCase().startsWith("adfs");
     }
+
+    public correlationId: string = Utils.guidEmpty;
 
     private tenantlessTenantName = "Common";
 
@@ -97,18 +101,22 @@ export class Authenticator {
         this.init(serviceBundle, authority, validateAuthority);
     }
 
+    public getAuthorityHost() {
+        return !!this.authority ? new URL(this.authority).host : null;
+    }
+
     public async UpdateAuthorityAsync(
         serviceBundle: IServiceBundle,
         authority: string,
-        requestContext: RequestContext): Promise<void> {
+        callState: CallState): Promise<void> {
 
         this.init(serviceBundle, authority, this.validateAuthority);
 
         this._updatedFromTemplate = false;
-        await this.UpdateFromTemplateAsync(requestContext);
+        await this.updateFromTemplateAsync(callState);
     }
 
-    public async UpdateFromTemplateAsync(requestContext: RequestContext): Promise<void> {
+    public async updateFromTemplateAsync(callState: CallState): Promise<void> {
         if (!this._updatedFromTemplate) {
             const authorityUri = new URL(this.authority);
             let host = authorityUri.host;
@@ -122,7 +130,7 @@ export class Authenticator {
                 const metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(
                     authorityUri,
                     this.validateAuthority,
-                    requestContext);
+                    callState);
 
                 host = metadata.preferred_network;
                 // All the endpoints will use this updated host, and it affects future network calls, as desired.
@@ -144,7 +152,7 @@ export class Authenticator {
     private init(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean): void {
 
         this._authority = Authenticator.ensureUrlEndsWithForwardSlash(authority);
-        this._authorityType = Authenticator.DetectAuthorityType(authority);
+        this._authorityType = Authenticator.detectAuthorityType(authority);
 
         if (this.authorityType !== AuthorityType.AAD && validateAuthority) {
             throw new Error("UnsupportedAuthorityValidation");

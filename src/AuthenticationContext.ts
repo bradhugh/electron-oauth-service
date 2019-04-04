@@ -1,5 +1,5 @@
 import { AuthenticationResult } from "./AuthenticationResult";
-import { AdalLogger } from "./core/AdalLogger";
+import { ConsoleLogger } from "./core/AdalLogger";
 import { ICoreLogger } from "./core/CoreLoggerBase";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { TokenCache } from "./TokenCache";
@@ -8,7 +8,7 @@ import { Utils } from "./Utils";
 export class AuthenticationContext {
 
     // TODO: Generate correlation id
-    private logger: ICoreLogger = new AdalLogger(Utils.guidEmpty);
+    private logger: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
 
     private tokenCache: TokenCache = new TokenCache(this.logger);
 

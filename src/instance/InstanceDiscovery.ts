@@ -1,5 +1,5 @@
 import { IHttpManager } from "../core/Http/HttpManager";
-import { RequestContext } from "../core/RequestContext";
+import { CallState } from "../internal/CallState";
 
 export interface IInstanceDiscoveryMetadataEntry {
     preferred_network: string;
@@ -64,7 +64,7 @@ export class InstanceDiscovery {
     public async getMetadataEntryAsync(
         authority: URL,
         validateAuthority: boolean,
-        requestContext: RequestContext): Promise<IInstanceDiscoveryMetadataEntry> {
+        callState: CallState): Promise<IInstanceDiscoveryMetadataEntry> {
 
         if (!authority) {
             throw new Error("Authority cannot be null");
@@ -72,7 +72,7 @@ export class InstanceDiscovery {
 
         let entry: IInstanceDiscoveryMetadataEntry = this.instanceCache[authority.host];
         if (!entry) {
-            this.discoverAsync(authority, validateAuthority, requestContext);
+            this.discoverAsync(authority, validateAuthority, callState);
             entry = this.instanceCache[authority.host];
         }
 
@@ -82,7 +82,7 @@ export class InstanceDiscovery {
     public async discoverAsync(
         authority: URL,
         validateAuthority: boolean,
-        requestContext: RequestContext): Promise<void> {
+        callState: CallState): Promise<void> {
 
         const authorityHost = InstanceDiscovery.isWhitelisted(authority.host) ?
             InstanceDiscovery.getHost(authority) : InstanceDiscovery.defaultTrustedAuthority;
@@ -94,7 +94,7 @@ export class InstanceDiscovery {
         // I diverged here a bit, going to directly into HttpManager instead of building OAuthClient
         let discoveryResponse: IInstanceDiscoveryResponse = null;
         try {
-            const httpResponse = await this.httpManager.sendGetAsync(instanceDiscoveryEndpoint, {}, requestContext);
+            const httpResponse = await this.httpManager.sendGetAsync(instanceDiscoveryEndpoint, {}, callState);
             if (httpResponse.statusCode !== 200) {
                 throw new Error(`Metadata discovery failed. Status: ${httpResponse.statusCode}`);
             }

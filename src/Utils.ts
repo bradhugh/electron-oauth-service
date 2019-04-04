@@ -1,6 +1,7 @@
 import { BrowserWindow, net } from "electron";
 import { OAuth2Config, OAuth2Provider, OAuth2Response } from "electron-oauth-helper";
 import * as querystring from "querystring";
+import * as uuidv4 from "uuid/v4";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
 import { ICoreLogger } from "./core/CoreLoggerBase";
@@ -17,6 +18,10 @@ export interface IPostResponse {
 export class Utils {
 
     public static guidEmpty = "00000000-0000-0000-0000-000000000000";
+
+    public static newGuid(): string {
+        return uuidv4();
+    }
 
     public static tokenTimeToJsDate(time: string) {
 

@@ -1,10 +1,11 @@
-import { AdalLogger } from "./core/AdalLogger";
+import { ConsoleLogger } from "./core/AdalLogger";
 import { CoreLoggerBase } from "./core/CoreLoggerBase";
 import { HttpError, IHttpManager } from "./core/Http/HttpManager";
 import { HttpResponse } from "./core/Http/HttpResponse";
 import { RequestContext } from "./core/RequestContext";
 import { EncodingHelper } from "./helpers/EncodingHelper";
 import { Utils } from "./Utils";
+import { CallState } from "./internal/CallState";
 
 export class AuthenticationParameters {
     private static authenticateHeader = "WWW-Authenticate";
@@ -74,8 +75,7 @@ export class AuthenticationParameters {
             await this.httpManager.sendGetAsync(
                 resourceUrl.href,
                 null,
-                new RequestContext(
-                    null, new AdalLogger(Utils.guidEmpty)));
+                new CallState(Utils.guidEmpty));
 
             const ex = new Error("AdalError.UnauthorizedResponseExpected");
             CoreLoggerBase.default.errorExPii(ex);

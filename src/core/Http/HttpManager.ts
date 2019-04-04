@@ -3,6 +3,7 @@ import { HttpResponse } from "./HttpResponse";
 
 import { net } from "electron";
 import * as querystring from "querystring";
+import { CallState } from "../../internal/CallState";
 
 // tslint:disable: max-classes-per-file
 
@@ -11,24 +12,24 @@ export interface IHttpManager {
         endpoint: string,
         headers: { [key: string]: string },
         bodyParameters: { [key: string]: string },
-        requestContext: RequestContext): Promise<HttpResponse>;
+        callState: CallState): Promise<HttpResponse>;
 
     sendPostWithContentAsync(
         endpoint: string,
         headers: { [key: string]: string },
         body: string,
-        requestContext: RequestContext): Promise<HttpResponse>;
+        callState: CallState): Promise<HttpResponse>;
 
     sendGetAsync(
         endpoint: string,
         headers: { [key: string]: string },
-        requestContext: RequestContext): Promise<HttpResponse>;
+        callState: CallState): Promise<HttpResponse>;
 
     sendPostForceResponseAsync(
         endpoint: string,
         headers: { [key: string]: string },
         body: string,
-        requestContext: RequestContext): Promise<HttpResponse>;
+        callState: CallState): Promise<HttpResponse>;
 }
 
 export class HttpError extends Error {
@@ -42,7 +43,7 @@ export class HttpManager implements IHttpManager {
         endpoint: string,
         headers: { [key: string]: string },
         bodyParameters: { [key: string]: string },
-        requestContext: RequestContext): Promise<HttpResponse> {
+        callState: CallState): Promise<HttpResponse> {
 
         const postData = querystring.stringify(bodyParameters);
         headers["content-type"] = "application/x-www-form-urlencoded";
@@ -53,7 +54,7 @@ export class HttpManager implements IHttpManager {
             "POST",
             headers,
             postData,
-            requestContext);
+            callState);
 
         return resp;
     }
@@ -62,14 +63,14 @@ export class HttpManager implements IHttpManager {
         endpoint: string,
         headers: { [key: string]: string },
         body: string,
-        requestContext: RequestContext): Promise<HttpResponse> {
+        callState: CallState): Promise<HttpResponse> {
 
         const resp = await this.requestCommonAsync(
             endpoint,
             "POST",
             headers,
             body,
-            requestContext);
+            callState);
 
         return resp;
 
@@ -78,14 +79,14 @@ export class HttpManager implements IHttpManager {
     public async sendGetAsync(
         endpoint: string,
         headers: { [key: string]: string },
-        requestContext: RequestContext): Promise<HttpResponse> {
+        callState: CallState): Promise<HttpResponse> {
 
         const resp = await this.requestCommonAsync(
             endpoint,
             "GET",
             headers,
             null,
-            requestContext);
+            callState);
 
         return resp;
     }
@@ -95,14 +96,14 @@ export class HttpManager implements IHttpManager {
         endpoint: string,
         headers: { [key: string]: string },
         body: string,
-        requestContext: RequestContext): Promise<HttpResponse> {
+        callState: CallState): Promise<HttpResponse> {
 
         const resp = await this.requestCommonAsync(
             endpoint,
             "POST",
             headers,
             body,
-            requestContext);
+            callState);
 
         return resp;
     }
@@ -112,7 +113,7 @@ export class HttpManager implements IHttpManager {
         method: string,
         headers: { [key: string]: string },
         body: string,
-        _requestContext: RequestContext): Promise<HttpResponse> {
+        callState: CallState): Promise<HttpResponse> {
 
         return new Promise((resolve, reject) => {
 

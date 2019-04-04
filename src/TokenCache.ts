@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
-import { AdalLogger } from "./core/AdalLogger";
+import { ConsoleLogger } from "./core/AdalLogger";
 import { ICoreLogger } from "./core/CoreLoggerBase";
 import { ICacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
@@ -18,7 +18,7 @@ export class TokenCache extends EventEmitter {
     // hard coded setting to refresh tokens which are close to expiration.
     private static expirationMarginInMinutes = 5;
 
-    private static logger: ICoreLogger = new AdalLogger(Utils.guidEmpty);
+    private static logger: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
 
     private static $defaultShared = new TokenCache(TokenCache.logger);
 

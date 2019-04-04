@@ -1,5 +1,5 @@
 import { Utils } from "../Utils";
-import { AdalLogger } from "./AdalLogger";
+import { ConsoleLogger } from "./AdalLogger";
 
 export interface ICoreLogger {
     correlationId: string;
@@ -25,5 +25,5 @@ export interface ICoreLogger {
 }
 
 export class CoreLoggerBase {
-    public static default: ICoreLogger = new AdalLogger(Utils.guidEmpty);
+    public static default: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
 }
