@@ -3,10 +3,9 @@ import { OAuth2Config, OAuth2Provider, OAuth2Response } from "electron-oauth-hel
 import * as querystring from "querystring";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
+import { ICoreLogger } from "./core/CoreLoggerBase";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { TokenCache } from "./TokenCache";
-
-// tslint:disable: no-console
 
 export interface IPostResponse {
     headers: any;
@@ -39,7 +38,8 @@ export class Utils {
         resource: string,
         clientId: string,
         resultEx: AuthenticationResultEx,
-        tokenCache: TokenCache): Promise<AuthenticationResultEx> {
+        tokenCache: TokenCache,
+        logger: ICoreLogger): Promise<AuthenticationResultEx> {
 
         const postResponse = await Utils.postRequestAsync(url, {
             grant_type: "refresh_token",
@@ -50,16 +50,16 @@ export class Utils {
         });
 
         if (postResponse.statusCode !== 200) {
-            console.log("FAILED RESPONSE:");
-            console.log(postResponse.body.toString("utf8"));
+            logger.error("refreshAccessTokenAsync: FAILED RESPONSE:");
+            logger.errorPii(postResponse.body.toString("utf8"));
             throw new Error(
                 `Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
         }
 
         const responseString = postResponse.body.toString("utf8");
 
-        console.log("****POST RESPONSE****");
-        console.log(responseString);
+        logger.verbosePii("****POST RESPONSE****");
+        logger.verbosePii(responseString);
 
         const response: OAuth2Response = JSON.parse(responseString);
 
@@ -70,7 +70,7 @@ export class Utils {
             null); // TODO: ext_expires_in
 
         if (!response.refresh_token) {
-            console.log("Refresh token was missing from the token refresh response, " +
+            logger.info("Refresh token was missing from the token refresh response, " +
                 "so the refresh token in the request is returned instead");
         } else {
             resultEx.refreshToken = response.refresh_token;
@@ -93,7 +93,8 @@ export class Utils {
         tenantId: string,
         resourceId: string,
         scope: string,
-        tokenCache: TokenCache): Promise<AuthenticationResultEx> {
+        tokenCache: TokenCache,
+        logger: ICoreLogger): Promise<AuthenticationResultEx> {
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
             access_token_url: accessTokenUrl,
@@ -122,7 +123,7 @@ export class Utils {
             let extExpiresInSeconds = parseInt(response.ext_expires_in.toString(), 10);
 
             if (extExpiresInSeconds < expiresInSeconds) {
-                console.log(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}).` +
+                logger.info(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}).` +
                     "Set ExpiresIn as ExtendedExpiresIn");
                 extExpiresInSeconds = expiresInSeconds;
             }

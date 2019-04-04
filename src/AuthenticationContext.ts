@@ -1,13 +1,16 @@
 import { AuthenticationResult } from "./AuthenticationResult";
+import { AdalLogger } from "./core/AdalLogger";
+import { ICoreLogger } from "./core/CoreLoggerBase";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { TokenCache } from "./TokenCache";
 import { Utils } from "./Utils";
 
-// tslint:disable: no-console
-
 export class AuthenticationContext {
 
-    private tokenCache: TokenCache = new TokenCache();
+    // TODO: Generate correlation id
+    private logger: ICoreLogger = new AdalLogger(Utils.guidEmpty);
+
+    private tokenCache: TokenCache = new TokenCache(this.logger);
 
     constructor(
         private authority: string,
@@ -80,7 +83,8 @@ export class AuthenticationContext {
                 resource,
                 clientId,
                 result,
-                this.tokenCache);
+                this.tokenCache,
+                this.logger);
 
             if (result && result.result && result.result.accessToken) {
                 return result.result;
@@ -102,7 +106,8 @@ export class AuthenticationContext {
             tenant,
             resource,
             scope,
-            this.tokenCache);
+            this.tokenCache,
+            this.logger);
 
         return result.result;
     }

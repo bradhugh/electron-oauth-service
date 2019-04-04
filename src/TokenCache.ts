@@ -1,13 +1,14 @@
 import { EventEmitter } from "events";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
+import { AdalLogger } from "./core/AdalLogger";
+import { ICoreLogger } from "./core/CoreLoggerBase";
 import { ICacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { Pair } from "./Pair";
 import { TokenCacheItem } from "./TokenCacheItem";
 import { TokenCacheNotificationArgs } from "./TokenCacheNotificationArgs";
-
-// tslint:disable: no-console
+import { Utils } from "./Utils";
 
 export class TokenCache extends EventEmitter {
 
@@ -17,7 +18,9 @@ export class TokenCache extends EventEmitter {
     // hard coded setting to refresh tokens which are close to expiration.
     private static expirationMarginInMinutes = 5;
 
-    private static $defaultShared = new TokenCache();
+    private static logger: ICoreLogger = new AdalLogger(Utils.guidEmpty);
+
+    private static $defaultShared = new TokenCache(TokenCache.logger);
 
     private static isSameCloud(authority: string, authority1: string): boolean {
         return new URL(authority).host === new URL(authority1).host;
@@ -28,7 +31,7 @@ export class TokenCache extends EventEmitter {
     private tokenCacheDictionary = new Map<string, AuthenticationResultEx>();
 
     // Constructor that receives the optional state of the cache
-    constructor(state?: Buffer) {
+    constructor(private logger: ICoreLogger, state?: Buffer) {
         super();
 
         if (state) {
@@ -197,11 +200,11 @@ export class TokenCache extends EventEmitter {
             if (key.authority !== cacheQueryData.authority) {
                 // this is a cross-tenant result. use RT only
                 resultEx.result.accessToken = null;
-                console.log("Cross-tenant refresh token found in the cache");
+                this.logger.info("Cross-tenant refresh token found in the cache");
             } else if (tokenNearExpiry && !cacheQueryData.extendedLifeTimeEnabled) {
                 // An expired or near expiry token was found in the cache
                 resultEx.result.accessToken = null;
-                console.log("An expired or near expiry token was found in the cache");
+                this.logger.info("An expired or near expiry token was found in the cache");
             } else if (!key.resourceEquals(cacheQueryData.resource)) {
 
                 // Multi resource refresh token for resource '{0}' will be used to acquire token for '{1}'"
@@ -217,23 +220,24 @@ export class TokenCache extends EventEmitter {
                 resultEx.result.extendedLifeTimeToken = true;
                 resultEx.result.expiresOn = resultEx.result.extendedExpiresOn;
 
-                console.log("The extendedLifeTime is enabled and a stale AT with extendedLifeTimeEnabled is returned.");
+                this.logger.info(
+                    "The extendedLifeTime is enabled and a stale AT with extendedLifeTimeEnabled is returned.");
             } else if (tokenExtendedLifeTimeExpired) {
                 // The AT has expired its ExtendedLifeTime
                 resultEx.result.accessToken = null;
 
-                console.log("The AT has expired its ExtendedLifeTime");
+                this.logger.info("The AT has expired its ExtendedLifeTime");
             } else {
                 const millisecondsLeft = resultEx.result.expiresOn.getTime() - now.getTime();
                 const minutesLeft = millisecondsLeft / 1000 / 60;
-                console.log(`${minutesLeft.toFixed(2)} minutes left until token in cache expires`);
+                this.logger.info(`${minutesLeft.toFixed(2)} minutes left until token in cache expires`);
             }
 
             if (!resultEx.result.accessToken && !resultEx.refreshToken) {
                 // An old item was removed from the cache
                 this.tokenCacheDictionary.delete(key.toStringKey());
 
-                console.log("An old item was removed from the cache");
+                this.logger.info("An old item was removed from the cache");
 
                 this.hasStateChanged = true;
                 resultEx = null;
@@ -242,22 +246,14 @@ export class TokenCache extends EventEmitter {
             if (resultEx !== null) {
                 resultEx.result.authority = key.authority;
 
-                console.log("A matching item (access token or refresh token or both) was found in the cache");
+                this.logger.info("A matching item (access token or refresh token or both) was found in the cache");
             }
         } else {
             // No matching token was found in the cache
-            console.log(`No matching token was found in the cache`);
-            console.log(this.tokenCacheDictionary);
-            console.log(cacheQueryData);
+            this.logger.info(`No matching token was found in the cache`);
         }
 
         return resultEx;
-    }
-
-    public logCache(): void {
-        console.log("***** CACHE START *****");
-        console.log(this.tokenCacheDictionary);
-        console.log("***** CACHE END *****");
     }
 
     private queryCache(
@@ -271,12 +267,6 @@ export class TokenCache extends EventEmitter {
         for (const stringKey of this.tokenCacheDictionary.keys()) {
             const cacheKey = TokenCacheKey.fromStringKey(stringKey);
 
-            console.log(`Authority: ${(!authority || cacheKey.authority === authority)}`);
-            console.log(`clientId: ${(!clientId || cacheKey.clientIdEquals(clientId))}`);
-            console.log(`uniqueId: ${(!uniqueId || cacheKey.uniqueId === uniqueId)}`);
-            console.log(`displayableId: ${(!displayableId || cacheKey.displayableIdEquals(displayableId))}`);
-            console.log(`tokenSubjectType: ${cacheKey.tokenSubjectType === subjectType}`);
-
             if ((!authority || cacheKey.authority === authority)
                 && (!clientId || cacheKey.clientIdEquals(clientId))
                 && (!uniqueId || cacheKey.uniqueId === uniqueId)
@@ -284,9 +274,6 @@ export class TokenCache extends EventEmitter {
                 && cacheKey.tokenSubjectType === subjectType) {
 
                 // TODO: Do I need assertionHash?
-                console.log("queryCache returning cache entry with key:");
-                console.log(cacheKey);
-
                 const authResultEx = this.tokenCacheDictionary.get(stringKey);
                 results.push(new Pair<TokenCacheKey, AuthenticationResultEx>(cacheKey, authResultEx));
             }
