@@ -1,6 +1,6 @@
 import { TokenSubjectType } from "./TokenCacheKey";
 
-export interface CacheQueryData {
+export interface ICacheQueryData {
     authority: string;
     resource: string;
     clientId: string;

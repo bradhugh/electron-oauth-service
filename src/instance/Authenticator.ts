@@ -1,6 +1,6 @@
+import { RequestContext } from "../core/RequestContext";
 import { IServiceBundle } from "../core/ServiceBundle";
 import { InstanceDiscovery } from "./InstanceDiscovery";
-import { RequestContext } from "../core/RequestContext";
 
 export enum AuthorityType {
     AAD,
@@ -8,6 +8,41 @@ export enum AuthorityType {
 }
 
 export class Authenticator {
+
+    public static ensureUrlEndsWithForwardSlash(uri: string): string {
+        if (uri && !uri.endsWith("/")) {
+            uri = uri + "/";
+        }
+
+        return uri;
+    }
+
+    public static DetectAuthorityType(authority: string): AuthorityType {
+        if (!authority) {
+            throw new Error("authority cannot be null or empty");
+        }
+
+        const authorityUri = new URL(authority);
+        if (authorityUri.protocol !== "https") {
+            throw new Error("authority must be HTTPS");
+        }
+
+        const path: string = authorityUri.pathname.substring(1);
+        if (!path) {
+            throw new Error("The authority path is invalid");
+        }
+
+        const firstPath = path.substring(0, path.indexOf("/"));
+        const authorityType: AuthorityType = Authenticator.isAdfsAuthority(firstPath) ?
+            AuthorityType.ADFS : AuthorityType.AAD;
+
+        return authorityType;
+    }
+
+    private static isAdfsAuthority(firstPath: string) {
+        return firstPath.toLowerCase().startsWith("adfs");
+    }
+
     private tenantlessTenantName = "Common";
 
     private _validateAuthority = false;
@@ -62,7 +97,11 @@ export class Authenticator {
         this.init(serviceBundle, authority, validateAuthority);
     }
 
-    public async UpdateAuthorityAsync(serviceBundle: IServiceBundle, authority: string, requestContext: RequestContext): Promise<void> {
+    public async UpdateAuthorityAsync(
+        serviceBundle: IServiceBundle,
+        authority: string,
+        requestContext: RequestContext): Promise<void> {
+
         this.init(serviceBundle, authority, this.validateAuthority);
 
         this._updatedFromTemplate = false;
@@ -72,15 +111,19 @@ export class Authenticator {
     public async UpdateFromTemplateAsync(requestContext: RequestContext): Promise<void> {
         if (!this._updatedFromTemplate) {
             const authorityUri = new URL(this.authority);
-            var host = authorityUri.host;
+            let host = authorityUri.host;
 
-            // The authority could be https://{AzureAD host name}/{tenantid} OR https://{Dsts host name}/dstsv2/{tenantid}
+            // The authority could be https://{AzureAD host name}/{tenantid}
+            // OR https://{Dsts host name}/dstsv2/{tenantid}
             // Detecting the tenantId using the last segment of the url
             const segments = authorityUri.pathname.split("/");
             const tenant: string = segments[segments.length - 1];
-            if (this.authorityType == AuthorityType.AAD)
-            {
-                var metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(authorityUri, this.validateAuthority, requestContext);
+            if (this.authorityType === AuthorityType.AAD) {
+                const metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(
+                    authorityUri,
+                    this.validateAuthority,
+                    requestContext);
+
                 host = metadata.preferred_network;
                 // All the endpoints will use this updated host, and it affects future network calls, as desired.
                 // The Authority remains its original host, and will be used in TokenCache later.
@@ -98,46 +141,12 @@ export class Authenticator {
         }
     }
 
-    public static ensureUrlEndsWithForwardSlash(uri: string): string {
-        if (uri && !uri.endsWith("/")) {
-            uri = uri + "/";
-        }
-
-        return uri;
-    }
-
-    public static DetectAuthorityType(authority: string): AuthorityType {
-        if (!authority) {
-            throw new Error("authority cannot be null or empty");
-        }
-
-        const authorityUri = new URL(authority);
-        if (authorityUri.protocol !== "https") {
-            throw new Error("authority must be HTTPS");
-        }
-
-        const path: string = authorityUri.pathname.substring(1);
-        if (!path) {
-            throw new Error("The authority path is invalid");
-        }
-
-        const firstPath = path.substring(0, path.indexOf("/"));
-        const authorityType: AuthorityType = Authenticator.isAdfsAuthority(firstPath) ? AuthorityType.ADFS : AuthorityType.AAD;
-
-        return authorityType;
-    }
-
-    private static isAdfsAuthority(firstPath: string) {
-        return firstPath.toLowerCase().startsWith("adfs");
-    }
-
     private init(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean): void {
 
         this._authority = Authenticator.ensureUrlEndsWithForwardSlash(authority);
         this._authorityType = Authenticator.DetectAuthorityType(authority);
 
-        if (this.authorityType !== AuthorityType.AAD && validateAuthority)
-        {
+        if (this.authorityType !== AuthorityType.AAD && validateAuthority) {
             throw new Error("UnsupportedAuthorityValidation");
         }
 

@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
-import { CacheQueryData } from "./internal/cache/CacheQueryData";
+import { ICacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { Pair } from "./Pair";
 import { TokenCacheItem } from "./TokenCacheItem";
@@ -181,7 +181,7 @@ export class TokenCache extends EventEmitter {
         this.hasStateChanged = true;
     }
 
-    public loadFromCache(cacheQueryData: CacheQueryData) {
+    public loadFromCache(cacheQueryData: ICacheQueryData) {
 
         let resultEx: AuthenticationResultEx = null;
         const kvp = this.loadSingleItemFromCache(cacheQueryData);
@@ -295,7 +295,7 @@ export class TokenCache extends EventEmitter {
         return results;
     }
 
-    private loadSingleItemFromCache(cacheQueryData: CacheQueryData): Pair<TokenCacheKey, AuthenticationResultEx> {
+    private loadSingleItemFromCache(cacheQueryData: ICacheQueryData): Pair<TokenCacheKey, AuthenticationResultEx> {
         let cacheItems = this.queryCache(
             cacheQueryData.authority,
             cacheQueryData.clientId,
