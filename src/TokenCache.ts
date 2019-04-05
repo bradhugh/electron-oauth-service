@@ -5,6 +5,7 @@ import { ConsoleLogger } from "./core/AdalLogger";
 import { ICoreLogger } from "./core/CoreLoggerBase";
 import { ICacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
+import { CallState } from "./internal/CallState";
 import { Pair } from "./Pair";
 import { TokenCacheItem } from "./TokenCacheItem";
 import { TokenCacheNotificationArgs } from "./TokenCacheNotificationArgs";
@@ -159,12 +160,13 @@ export class TokenCache extends EventEmitter {
         this.emit("onafterAccess", args);
     }
 
-    public storeToCache(
+    public storeToCacheAsync(
         result: AuthenticationResultEx,
         authority: string,
         resource: string,
         clientId: string,
-        subjectType: TokenSubjectType): void {
+        subjectType: TokenSubjectType,
+        callState: CallState): void {
 
         const uniqueId = result.result.userInfo ? result.result.userInfo.uniqueId : null;
         const displayableId = result.result.userInfo ? result.result.userInfo.displayableId : null;
@@ -184,7 +186,7 @@ export class TokenCache extends EventEmitter {
         this.hasStateChanged = true;
     }
 
-    public loadFromCache(cacheQueryData: ICacheQueryData) {
+    public loadFromCacheAsync(cacheQueryData: ICacheQueryData, callState: CallState) {
 
         let resultEx: AuthenticationResultEx = null;
         const kvp = this.loadSingleItemFromCache(cacheQueryData);
@@ -254,6 +256,14 @@ export class TokenCache extends EventEmitter {
         }
 
         return resultEx;
+    }
+
+    public onBeforeAccess(args: TokenCacheNotificationArgs) {
+        this.emit("beforeAccess", args);
+    }
+
+    public onAfterAccess(args: TokenCacheNotificationArgs) {
+        this.emit("afterAccess", args);
     }
 
     private queryCache(

@@ -2,6 +2,7 @@ import { AuthenticationResult } from "./AuthenticationResult";
 import { ConsoleLogger } from "./core/AdalLogger";
 import { ICoreLogger } from "./core/CoreLoggerBase";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
+import { CallState } from "./internal/CallState";
 import { TokenCache } from "./TokenCache";
 import { Utils } from "./Utils";
 
@@ -11,6 +12,8 @@ export class AuthenticationContext {
     private logger: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
 
     private tokenCache: TokenCache = new TokenCache(this.logger);
+
+    private callState: CallState = new CallState(Utils.guidEmpty);
 
     constructor(
         private authority: string,
@@ -32,13 +35,14 @@ export class AuthenticationContext {
 
     public getCachedResult(resource: string, clientId: string): AuthenticationResult {
         // Check if token is in the cache
-        const exResult = this.tokenCache.loadFromCache({
+        const exResult = this.tokenCache.loadFromCacheAsync({
             authority: this.authority,
             resource,
             clientId,
             subjectType: TokenSubjectType.Client,
             extendedLifeTimeEnabled: false,
-        });
+        },
+        this.callState);
 
         // If we actually found a cache entry, return it
         if (exResult) {
@@ -62,13 +66,14 @@ export class AuthenticationContext {
         }
 
         // Check if token is in the cache
-        let result = this.tokenCache.loadFromCache({
+        let result = this.tokenCache.loadFromCacheAsync({
             authority: this.authority,
             resource,
             clientId,
             subjectType: TokenSubjectType.Client,
             extendedLifeTimeEnabled: false,
-        });
+        },
+        this.callState);
 
         // We found a valid token in the cache
         if (result && result.result && result.result.accessToken) {
@@ -84,7 +89,7 @@ export class AuthenticationContext {
                 clientId,
                 result,
                 this.tokenCache,
-                this.logger);
+                this.callState);
 
             if (result && result.result && result.result.accessToken) {
                 return result.result;
@@ -107,7 +112,7 @@ export class AuthenticationContext {
             resource,
             scope,
             this.tokenCache,
-            this.logger);
+            this.callState);
 
         return result.result;
     }

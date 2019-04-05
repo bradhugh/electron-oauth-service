@@ -22,6 +22,14 @@ export class EncodingHelper {
         return message;
     }
 
+    public static urlEncode(message: string): string {
+        if (!message) {
+            return null;
+        }
+
+        return escape(message);
+    }
+
     public static splitWithQuotes(input: string, delimiter: string): string[] {
         const items: string[] = [];
 
@@ -51,6 +59,27 @@ export class EncodingHelper {
         }
 
         return items;
+    }
+
+    public static addKeyValueString(messageBuilder: string, key: string, value: string): string {
+        const delimiter = (messageBuilder.length === 0) ? "" : "&";
+        messageBuilder += `${delimiter}${key}=`;
+        messageBuilder += value;
+        return messageBuilder;
+    }
+
+    /// <summary>
+    /// Deserialize the given JSON string in to the specified type <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Type to deserialize the JSON as</typeparam>
+    /// <param name="response">JSON string</param>
+    /// <returns>Deserialized type <typeparamref name="T"/></returns>
+    public static deserializeResponse<T>(response: string): T {
+        if (!response) {
+            return null;
+        }
+
+        return JSON.parse(response) as T;
     }
 
     private static parseKeyValueList(

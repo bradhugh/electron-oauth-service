@@ -41,6 +41,8 @@ export class Authenticator {
         return authorityType;
     }
 
+    private static tenantNameRegex = /common/i;
+
     private static isAdfsAuthority(firstPath: string) {
         return firstPath.toLowerCase().startsWith("adfs");
     }
@@ -97,6 +99,10 @@ export class Authenticator {
         return this._selfSignedJwtAudience;
     }
 
+    public get tokenUri(): string {
+        return this._tokenUri;
+    }
+
     constructor(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean) {
         this.init(serviceBundle, authority, validateAuthority);
     }
@@ -105,7 +111,14 @@ export class Authenticator {
         return !!this.authority ? new URL(this.authority).host : null;
     }
 
-    public async UpdateAuthorityAsync(
+    public updateTenantId(tenantId: string): void {
+        if (this.isTenantless && tenantId) {
+            this.replaceTenantlessTenant(tenantId);
+            this._updatedFromTemplate = false;
+        }
+    }
+
+    public async updateAuthorityAsync(
         serviceBundle: IServiceBundle,
         authority: string,
         callState: CallState): Promise<void> {
@@ -160,5 +173,9 @@ export class Authenticator {
 
         this._validateAuthority = true;
         this._serviceBundle = serviceBundle;
+    }
+
+    private replaceTenantlessTenant(tenantId: string): void {
+        this._authority = this.authority.replace(Authenticator.tenantNameRegex, tenantId);
     }
 }

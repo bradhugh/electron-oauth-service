@@ -4,8 +4,8 @@ import { HttpError, IHttpManager } from "./core/Http/HttpManager";
 import { HttpResponse } from "./core/Http/HttpResponse";
 import { RequestContext } from "./core/RequestContext";
 import { EncodingHelper } from "./helpers/EncodingHelper";
-import { Utils } from "./Utils";
 import { CallState } from "./internal/CallState";
+import { Utils } from "./Utils";
 
 export class AuthenticationParameters {
     private static authenticateHeader = "WWW-Authenticate";

@@ -4,8 +4,8 @@ import * as querystring from "querystring";
 import * as uuidv4 from "uuid/v4";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
-import { ICoreLogger } from "./core/CoreLoggerBase";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
+import { CallState } from "./internal/CallState";
 import { TokenCache } from "./TokenCache";
 
 export interface IPostResponse {
@@ -21,6 +21,12 @@ export class Utils {
 
     public static newGuid(): string {
         return uuidv4();
+    }
+
+    public static delay(milliseconds: number): Promise<void> {
+        return new Promise<void>((resolve, _reject) => {
+            setTimeout(resolve, milliseconds);
+        });
     }
 
     public static tokenTimeToJsDate(time: string) {
@@ -44,7 +50,7 @@ export class Utils {
         clientId: string,
         resultEx: AuthenticationResultEx,
         tokenCache: TokenCache,
-        logger: ICoreLogger): Promise<AuthenticationResultEx> {
+        callState: CallState): Promise<AuthenticationResultEx> {
 
         const postResponse = await Utils.postRequestAsync(url, {
             grant_type: "refresh_token",
@@ -55,16 +61,16 @@ export class Utils {
         });
 
         if (postResponse.statusCode !== 200) {
-            logger.error("refreshAccessTokenAsync: FAILED RESPONSE:");
-            logger.errorPii(postResponse.body.toString("utf8"));
+            callState.logger.error("refreshAccessTokenAsync: FAILED RESPONSE:");
+            callState.logger.errorPii(postResponse.body.toString("utf8"));
             throw new Error(
                 `Failed to refresh token. Error: ${postResponse.statusCode} - ${postResponse.statusMessage}`);
         }
 
         const responseString = postResponse.body.toString("utf8");
 
-        logger.verbosePii("****POST RESPONSE****");
-        logger.verbosePii(responseString);
+        callState.logger.verbosePii("****POST RESPONSE****");
+        callState.logger.verbosePii(responseString);
 
         const response: OAuth2Response = JSON.parse(responseString);
 
@@ -75,14 +81,14 @@ export class Utils {
             null); // TODO: ext_expires_in
 
         if (!response.refresh_token) {
-            logger.info("Refresh token was missing from the token refresh response, " +
+            callState.logger.info("Refresh token was missing from the token refresh response, " +
                 "so the refresh token in the request is returned instead");
         } else {
             resultEx.refreshToken = response.refresh_token;
         }
 
         // REVIEW: What should TokenSubjectType be?
-        tokenCache.storeToCache(resultEx, authority, resource, clientId, TokenSubjectType.Client);
+        tokenCache.storeToCacheAsync(resultEx, authority, resource, clientId, TokenSubjectType.Client, callState);
 
         return resultEx;
     }
@@ -99,7 +105,7 @@ export class Utils {
         resourceId: string,
         scope: string,
         tokenCache: TokenCache,
-        logger: ICoreLogger): Promise<AuthenticationResultEx> {
+        callState: CallState): Promise<AuthenticationResultEx> {
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
             access_token_url: accessTokenUrl,
@@ -128,8 +134,8 @@ export class Utils {
             let extExpiresInSeconds = parseInt(response.ext_expires_in.toString(), 10);
 
             if (extExpiresInSeconds < expiresInSeconds) {
-                logger.info(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ExpiresIn(${expiresInSeconds}).` +
-                    "Set ExpiresIn as ExtendedExpiresIn");
+                callState.logger.info(`ExtendedExpiresIn(${extExpiresInSeconds}) is less than ` +
+                    `ExpiresIn(${expiresInSeconds}). Set ExpiresIn as ExtendedExpiresIn`);
                 extExpiresInSeconds = expiresInSeconds;
             }
 
@@ -149,7 +155,7 @@ export class Utils {
             exResult.error = null;
 
             // REVIEW: What should TokenSubjectType be?
-            tokenCache.storeToCache(exResult, authority, resourceId, clientId, TokenSubjectType.Client);
+            tokenCache.storeToCacheAsync(exResult, authority, resourceId, clientId, TokenSubjectType.Client, callState);
 
             return exResult;
 
