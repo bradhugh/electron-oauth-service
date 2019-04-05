@@ -1,4 +1,6 @@
 import { AdalError } from "./AdalError";
+import { HttpHeaderCollection } from "./internal/http/HttpHeaderCollection";
+import { HttpStatusCode } from "./internal/http/HttpStatusCode";
 
 /// <summary>
 /// The exception type thrown when user returned by service does not match user in the request.
@@ -12,12 +14,12 @@ export class AdalServiceError extends AdalError {
     /// (See http://msdn.microsoft.com/en-us/library/bb268233(v=vs.85).aspx).
     /// You can use this code for purposes such as implementing retry logic or error investigation.
     /// </summary>
-    public statusCode: number = 0;
+    public statusCode: HttpStatusCode = 0;
 
     /// <summary>
     /// Contains headers from the response that indicated an error
     /// </summary>
-    public headers: any;
+    public headers: HttpHeaderCollection;
 
     /// <summary>
     ///  Initializes a new instance of the exception class with a specified
