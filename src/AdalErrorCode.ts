@@ -194,7 +194,7 @@ export class AdalErrorCode {
 
     /// <summary>
     /// One of two conditions was encountered.
-    /// 1. The PromptBehavior.Never flag was passed and but the staticraint could not be honored 
+    /// 1. The PromptBehavior.Never flag was passed and but the staticraint could not be honored
     ///    because user interaction was required.
     /// 2. An error occurred during a silent web authentication that prevented the authentication
     ///    flow from completing in a short enough time frame.
