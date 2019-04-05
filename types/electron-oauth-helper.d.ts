@@ -6,7 +6,8 @@ declare module "electron-oauth-helper" {
         authorize_url: string;
         access_token_url: string;
         response_type: string;
-        scope: string;
+        resource: string;
+        scope?: string;
         client_id: string;
         redirect_uri: string;
     }

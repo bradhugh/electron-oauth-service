@@ -103,14 +103,15 @@ export class Utils {
         redirectUri: string,
         tenantId: string,
         resourceId: string,
-        scope: string,
         tokenCache: TokenCache,
         callState: CallState): Promise<AuthenticationResultEx> {
+
+        // REVIEW: TenantId is now unused - need to figure out where it should go
         const config: OAuth2Config = {
             authorize_url: authorizeUrl,
             access_token_url: accessTokenUrl,
             client_id: clientId,
-            scope: `https://${tenantId}/${resourceId}/${scope}`,
+            resource: resourceId,
             response_type: "code",
             redirect_uri: redirectUri,
         };

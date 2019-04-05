@@ -25,12 +25,11 @@ export class AuthenticationContext {
     public async acquireTokenSilentAsync(
         tenant: string,
         resource: string,
-        scope: string,
         clientId: string,
         redirectUri: string = null): Promise<AuthenticationResult> {
 
         // Acquire token silently
-        return this.acquireTokenAsync(tenant, resource, scope, clientId, redirectUri, true);
+        return this.acquireTokenAsync(tenant, resource, clientId, redirectUri, true);
     }
 
     public getCachedResult(resource: string, clientId: string): AuthenticationResult {
@@ -56,7 +55,6 @@ export class AuthenticationContext {
     public async acquireTokenAsync(
         tenant: string,
         resource: string,
-        scope: string = "user_impersonation",
         clientId: string,
         redirectUri: string = null,
         silent = false): Promise<AuthenticationResult> {
@@ -110,7 +108,6 @@ export class AuthenticationContext {
             redirectUri,
             tenant,
             resource,
-            scope,
             this.tokenCache,
             this.callState);
 
