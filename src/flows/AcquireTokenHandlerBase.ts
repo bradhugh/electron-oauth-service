@@ -189,7 +189,7 @@ export abstract class AcquireTokenHandlerBase {
         }
     }
 
-    protected abstract addAditionalRequestParameters(requestParameters: DictionaryRequestParameters): void;
+    protected abstract addAdditionalRequestParameters(requestParameters: DictionaryRequestParameters): void;
 
     protected preTokenRequestAsync(): Promise<void> {
         return Promise.resolve();
@@ -232,7 +232,7 @@ export abstract class AcquireTokenHandlerBase {
 
     protected async sendTokenRequestAsync(): Promise<AuthenticationResultEx> {
         const requestParameters = new DictionaryRequestParameters(this.resource, this.clientKey);
-        this.addAditionalRequestParameters(requestParameters);
+        this.addAdditionalRequestParameters(requestParameters);
         return await this.sendHttpMessageAsync(requestParameters);
     }
 

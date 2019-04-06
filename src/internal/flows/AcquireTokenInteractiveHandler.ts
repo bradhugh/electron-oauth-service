@@ -136,7 +136,7 @@ export class AcquireTokenInteractiveHandler extends AcquireTokenHandlerBase {
         }
     }
 
-    protected addAditionalRequestParameters(requestParameters: DictionaryRequestParameters): void {
+    protected addAdditionalRequestParameters(requestParameters: DictionaryRequestParameters): void {
         requestParameters.set(OAuthParameter.grantType, OAuthGrantType.authorizationCode);
         requestParameters.set(OAuthParameter.code, this.authorizationResult.code);
         requestParameters.set(OAuthParameter.redirectUri, this.redirectUriRequestParameter);
