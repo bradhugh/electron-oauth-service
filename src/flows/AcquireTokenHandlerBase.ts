@@ -172,7 +172,7 @@ export abstract class AcquireTokenHandlerBase {
             return this.resultEx.result;
         } catch (error) {
             this.callState.logger.errorExPii(error);
-            if (this.client != null && this.client.resiliency && extendedLifetimeResultEx != null) {
+            if (this.client && this.client.resiliency && extendedLifetimeResultEx) {
                 const msg = "Refreshing AT failed either due to one of these :- Internal Server Error," +
                             "Gateway Timeout and Service Unavailable. " +
                             "Hence returning back stale AT";
@@ -180,6 +180,8 @@ export abstract class AcquireTokenHandlerBase {
 
                 return extendedLifetimeResultEx.result;
             }
+
+            throw error;
         } finally {
             if (notifiedBeforeAccessCache) {
                 this.notifyAfterAccessCache();
