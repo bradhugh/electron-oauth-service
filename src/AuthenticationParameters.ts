@@ -43,7 +43,7 @@ export class AuthenticationParameters {
 
         authenticateHeader = authenticateHeader.substring(AuthenticationParameters.bearer.length).trim();
 
-        let authenticateHeaderItems: { [key: string]: string } = null;
+        let authenticateHeaderItems: Map<string, string> = null;
         try {
             // tslint:disable-next-line: max-line-length
             authenticateHeaderItems = EncodingHelper.parseKeyValueListStrict(authenticateHeader, ",", false, true, null);
@@ -56,9 +56,9 @@ export class AuthenticationParameters {
 
         const authParams = new AuthenticationParameters(this.httpManager);
         let param;
-        param = authenticateHeaderItems[AuthenticationParameters.authorityKey];
+        param = authenticateHeaderItems.get(AuthenticationParameters.authorityKey);
         authParams.authority = !param ? null : param;
-        param = authenticateHeaderItems[AuthenticationParameters.resourceKey];
+        param = authenticateHeaderItems.get(AuthenticationParameters.resourceKey);
         authParams.resource = !param ? null : param;
 
         return authParams;

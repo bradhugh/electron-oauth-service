@@ -172,6 +172,17 @@ export abstract class AcquireTokenHandlerBase {
         }
     }
 
+    protected async postTokenRequestAsync(resultEx: AuthenticationResultEx): Promise<void> {
+        // if broker returned Authority update Authentiator
+        if (resultEx.result.authority) {
+            await this.updateAuthorityAsync(resultEx.result.authority);
+        }
+
+        this.authenticator.updateTenantId(resultEx.result.tenantId);
+
+        resultEx.result.authority = this.authenticator.authority;
+    }
+
     protected async preRunAsync(): Promise<void> {
         await this.authenticator.updateFromTemplateAsync(this.callState);
         this.validateAuthorityType();

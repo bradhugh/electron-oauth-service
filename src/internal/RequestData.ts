@@ -1,7 +1,7 @@
-import { ClientKey } from "../flows/AcquireTokenHandlerBase";
 import { Authenticator } from "../instance/Authenticator";
 import { TokenCache } from "../TokenCache";
 import { TokenSubjectType } from "./cache/TokenCacheKey";
+import { ClientKey } from "./clientcreds/ClientKey";
 
 export interface IRequestData {
     authenticator: Authenticator;

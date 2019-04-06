@@ -83,7 +83,7 @@ export class AdalErrorMessage {
         "This authority does not support refresh token for multiple resources. Pass null as a resource";
 
     public static authenticationCanceled = "User canceled authentication";
-    public static userMismatch = "User '{0}' returned by service does not match user '{1}' in the request";
+
     public static userCredentialAssertionTypeEmpty = "credential.AssertionType cannot be empty";
 
     public static userInteractionRequired =
@@ -109,9 +109,11 @@ export class AdalErrorMessage {
     public static integratedAuthFailed =
         "Integrated authentication failed. You may try an alternative authentication method";
 
-    public static duplicateQueryParameter = (param: string) => `Duplicate query parameter '${param}' in extraQueryParameters`;
-
     public static deviceCertificateNotFoundTemplate = "Device Certificate was not found for {0}";
 
     public static interactionRequired = "interaction_required";
+
+    public static userMismatch = (user1: string, user2: string) => `User '${user1}' returned by service does not match user '${user2}' in the request`;
+
+    public static duplicateQueryParameter = (param: string) => `Duplicate query parameter '${param}' in extraQueryParameters`;
 }

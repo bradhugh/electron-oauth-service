@@ -1,6 +1,7 @@
 import { AdalError } from "../../AdalError";
 import { AdalErrorCode } from "../../AdalErrorCode";
 import { AdalServiceError } from "../../AdalServiceError";
+import { AdalUserMismatchError } from "../../AdalUserMismatchException";
 import { AuthenticationResultEx } from "../../AuthenticationResultEx";
 import { AdalErrorMessage } from "../../Constants";
 import { AcquireTokenHandlerBase } from "../../flows/AcquireTokenHandlerBase";
@@ -155,12 +156,12 @@ export class AcquireTokenInteractiveHandler extends AcquireTokenHandlerBase {
 
         if (this.userIdentifierType === UserIdentifierType.UniqueId
             && uniqueId !== this.uniqueId) {
-            throw new AdalUserMismatchException(this.uniqueId, uniqueId);
+            throw new AdalUserMismatchError(this.uniqueId, uniqueId);
         }
 
         if (this.userIdentifierType === UserIdentifierType.RequiredDisplayableId
             && displayableId !== this.displayableId) {
-            throw new AdalUserMismatchException(this.displayableId, displayableId);
+            throw new AdalUserMismatchError(this.displayableId, displayableId);
         }
     }
 
