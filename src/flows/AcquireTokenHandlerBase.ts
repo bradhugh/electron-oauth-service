@@ -48,7 +48,17 @@ export abstract class AcquireTokenHandlerBase {
     protected userIdentifierType: UserIdentifierType;
 
     private tokenCache: TokenCache;
-    private cacheQueryData: ICacheQueryData = null;
+    private cacheQueryData: ICacheQueryData = {
+        assertionHash: null,
+        authority: null,
+        clientId: null,
+        displayableId: null,
+        extendedLifeTimeEnabled: false,
+        resource: null,
+        subjectType: TokenSubjectType.User,
+        uniqueId: null,
+    };
+
     private client: AdalHttpClient = null;
 
     protected constructor(requestData: IRequestData) {
@@ -141,7 +151,20 @@ export abstract class AcquireTokenHandlerBase {
             if (!this.resultEx || this.resultEx.error) {
                 // TODO: Review what is broker? Is this browser?
 
+                await this.preTokenRequestAsync();
+
+                await this.sendTokenRequestAsync();
+
+                if (this.resultEx && this.resultEx.error) {
+                    throw this.resultEx.error;
+                }
+
+                await this.postTokenRequestAsync(this.resultEx);
+                notifiedBeforeAccessCache = await this.storeResultExToCacheAsync(notifiedBeforeAccessCache);
             }
+
+            await this.postRunAsync(this.resultEx.result);
+            return this.resultEx.result;
         } catch (error) {
             this.callState.logger.errorExPii(error);
             if (this.client != null && this.client.resiliency && extendedLifetimeResultEx != null) {
@@ -183,6 +206,12 @@ export abstract class AcquireTokenHandlerBase {
         resultEx.result.authority = this.authenticator.authority;
     }
 
+    protected postRunAsync(result: AuthenticationResult): Promise<void> {
+        this.logReturnedToken(result);
+
+        return Promise.resolve();
+    }
+
     protected async preRunAsync(): Promise<void> {
         await this.authenticator.updateFromTemplateAsync(this.callState);
         this.validateAuthorityType();
@@ -217,6 +246,21 @@ export abstract class AcquireTokenHandlerBase {
         }
 
         return result;
+    }
+
+    private logReturnedToken(result: AuthenticationResult): void {
+        if (result.accessToken) {
+            // TODO: for now, just log the AT CryptographyHelper.CreateSha256Hash(result.AccessToken);
+            const accessTokenHash = result.accessToken;
+
+            // tslint:disable-next-line: max-line-length
+            const msg = `=== Token Acquisition finished successfully. An access token was returned: Expiration Time: ${result.expiresOn}`;
+            this.callState.logger.info(msg);
+
+            const userId = result.userInfo != null ? result.userInfo.uniqueId : "null";
+            const piiMsg = msg + `Access Token Hash: ${accessTokenHash}\n\t User id: ${userId}`;
+            this.callState.logger.infoPii(piiMsg);
+        }
     }
 
     private async sendHttpMessageAsync(requestParameters: IRequestParameters): Promise<AuthenticationResultEx> {
