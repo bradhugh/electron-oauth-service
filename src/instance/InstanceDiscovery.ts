@@ -102,11 +102,11 @@ export class InstanceDiscovery {
                 throw new AdalError(AdalErrorCode.authorityNotInValidList, null, null);
             }
         } catch (error) {
-
-            const ex: AdalServiceError = error as AdalServiceError;
-            if (!ex) {
+            if (!(error instanceof AdalServiceError)) {
                 throw error;
             }
+
+            const ex = error as AdalServiceError;
 
             // The pre-existing implementation
             // has been coded in this way: it catches the AdalServiceException and then

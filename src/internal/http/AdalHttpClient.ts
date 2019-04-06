@@ -61,6 +61,8 @@ export class AdalHttpClient {
             typedResponse = EncodingHelper.deserializeResponse<T>(response.responseString);
         } catch (error) {
 
+            throw error;
+
             // const ex = error as HttpRequestWrapperException;
             // if (!ex) {
             //     throw error;

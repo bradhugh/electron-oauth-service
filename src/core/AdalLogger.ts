@@ -3,7 +3,7 @@ import { ICoreLogger } from "./CoreLoggerBase";
 // tslint:disable: no-console
 
 export class ConsoleLogger implements ICoreLogger {
-    public piiLoggingEnabled: boolean = false;
+    public piiLoggingEnabled: boolean = true;
 
     constructor(public correlationId: string) {}
 

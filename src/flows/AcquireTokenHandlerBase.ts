@@ -120,8 +120,10 @@ export abstract class AcquireTokenHandlerBase {
         let extendedLifetimeResultEx: AuthenticationResultEx = null;
 
         try {
+            this.callState.logger.info("preRunAsync");
             await this.preRunAsync();
 
+            this.callState.logger.info(`Load from cache? ${this.loadFromCache}`);
             if (this.loadFromCache) {
                 this.callState.logger.verbose("Loading from cache.");
 
@@ -148,11 +150,14 @@ export abstract class AcquireTokenHandlerBase {
                 }
             }
 
-            if (!this.resultEx || this.resultEx.error) {
-                // TODO: Review what is broker? Is this browser?
+            this.callState.logger.info(
+                `After cache and refresh: ${this.resultEx ? JSON.stringify(this.resultEx) : "null"}`);
 
+            if (!this.resultEx || this.resultEx.error) {
+                this.callState.logger.info("preTokenRequestAsync");
                 await this.preTokenRequestAsync();
 
+                this.callState.logger.info("sendTokenRequestAsync");
                 await this.sendTokenRequestAsync();
 
                 if (this.resultEx && this.resultEx.error) {
@@ -305,6 +310,10 @@ export abstract class AcquireTokenHandlerBase {
                         result.result.userInfo);
                 }
             } catch (error) {
+                if (!(error instanceof AdalServiceError)) {
+                    throw error;
+                }
+
                 const serviceError: AdalServiceError = error as AdalServiceError;
                 if (serviceError && serviceError.errorCode === "invalid_request") {
                     throw new AdalServiceError(

@@ -122,15 +122,13 @@ export class Authenticator {
     }
 
     public async updateFromTemplateAsync(callState: CallState): Promise<void> {
+        callState.logger.verbose(`updateFromTemplateAsync enter. updatedFromTemplate: ${this._updatedFromTemplate}`);
         if (!this._updatedFromTemplate) {
             const authorityUri = new URL(this.authority);
             let host = authorityUri.host;
 
-            // The authority could be https://{AzureAD host name}/{tenantid}
-            // OR https://{Dsts host name}/dstsv2/{tenantid}
-            // Detecting the tenantId using the last segment of the url
-            const segments = authorityUri.pathname.split("/");
-            const tenant: string = segments[segments.length - 1];
+            const path: string = authorityUri.pathname.substring(1);
+            const tenant = path.substring(0, path.indexOf("/"));
             if (this.authorityType === AuthorityType.AAD) {
                 const metadata = await InstanceDiscovery.getMetadataEntryAsync(
                     authorityUri,
@@ -152,6 +150,8 @@ export class Authenticator {
             this._selfSignedJwtAudience = this._tokenUri;
             this._updatedFromTemplate = true;
         }
+
+        callState.logger.verbose("updateFromTemplateAsync exit.");
     }
 
     private init(authority: string, validateAuthority: boolean): void {

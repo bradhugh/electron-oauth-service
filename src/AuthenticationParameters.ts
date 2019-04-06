@@ -82,6 +82,10 @@ export class AuthenticationParameters {
             throw ex;
 
         } catch (error) {
+            if (!(error instanceof HttpError)) {
+                throw error;
+            }
+
             const httpError = error as HttpError;
             if (httpError) {
                 const response = httpError.response;
