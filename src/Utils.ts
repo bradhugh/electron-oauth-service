@@ -101,7 +101,6 @@ export class Utils {
         accessTokenUrl: string,
         clientId: string,
         redirectUri: string,
-        tenantId: string,
         resourceId: string,
         tokenCache: TokenCache,
         callState: CallState): Promise<AuthenticationResultEx> {

@@ -34,7 +34,7 @@ export abstract class PlatformInformationBase {
         return true;
     }
 
-    public ValidateRedirectUri(redirectUri: URL, callState: CallState): URL {
+    public validateRedirectUri(redirectUri: URL, callState: CallState): URL {
         if (!redirectUri) {
             throw new Error("redirectUri cannot be null");
         }

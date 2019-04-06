@@ -1,35 +1,40 @@
 import { AuthenticationResult } from "./AuthenticationResult";
 import { ConsoleLogger } from "./core/AdalLogger";
 import { ICoreLogger } from "./core/CoreLoggerBase";
+import { Authenticator } from "./instance/Authenticator";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { CallState } from "./internal/CallState";
+import { ClientKey } from "./internal/clientcreds/ClientKey";
+import { AcquireTokenInteractiveHandler } from "./internal/flows/AcquireTokenInteractiveHandler";
+import { IPlatformParameters } from "./internal/platform/IPlatformParameters";
+import { IWebUI } from "./internal/platform/IWebUI";
+import { IRequestData } from "./internal/RequestData";
 import { TokenCache } from "./TokenCache";
+import { UserIdentifier } from "./UserIdentifier";
 import { Utils } from "./Utils";
+
+export enum AuthorityValidationType {
+    True,
+    False,
+    NotProvided,
+}
 
 export class AuthenticationContext {
 
-    // TODO: Generate correlation id
-    private logger: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
+    public extendedLifeTimeEnabled = false;
 
-    private tokenCache: TokenCache = new TokenCache(this.logger);
+    public authenticator: Authenticator;
 
     private callState: CallState = new CallState(Utils.guidEmpty);
 
     constructor(
-        private authority: string,
-        private authorizeUrl: string,
-        private accessTokenUrl: string,
-        private redirectUri: string,
-    ) {}
-
-    public async acquireTokenSilentAsync(
-        tenant: string,
-        resource: string,
-        clientId: string,
-        redirectUri: string = null): Promise<AuthenticationResult> {
-
-        // Acquire token silently
-        return this.acquireTokenAsync(tenant, resource, clientId, redirectUri, true);
+        public authority: string,
+        validateAuthority: AuthorityValidationType = AuthorityValidationType.NotProvided,
+        public tokenCache: TokenCache = TokenCache.defaultShared,
+    ) {
+        this.authenticator = new Authenticator(
+            authority,
+            (validateAuthority !== AuthorityValidationType.False));
     }
 
     public getCachedResult(resource: string, clientId: string): AuthenticationResult {
@@ -52,16 +57,12 @@ export class AuthenticationContext {
         return new AuthenticationResult(null, null, null);
     }
 
-    public async acquireTokenAsync(
-        tenant: string,
+    public async acquireTokenAsyncOld(
         resource: string,
         clientId: string,
-        redirectUri: string = null,
-        silent = false): Promise<AuthenticationResult> {
-
-        if (!redirectUri) {
-            redirectUri = this.redirectUri;
-        }
+        redirectUri: string,
+        authorizeUrl: string,
+        accessTokenUrl: string): Promise<AuthenticationResult> {
 
         // Check if token is in the cache
         let result = this.tokenCache.loadFromCacheAsync({
@@ -81,7 +82,7 @@ export class AuthenticationContext {
         // Token is expired, but we have a refresh token
         if (result && result.refreshToken) {
             result = await Utils.refreshAccessTokenAsync(
-                this.accessTokenUrl,
+                accessTokenUrl,
                 this.authority,
                 resource,
                 clientId,
@@ -94,19 +95,13 @@ export class AuthenticationContext {
             }
         }
 
-        // If they specified silent, we can't do the interactive
-        if (silent) {
-            return result.result;
-        }
-
         // Get the token interactively if needed
         result = await Utils.getAuthTokenInteractiveAsync(
             this.authority,
-            this.authorizeUrl,
-            this.accessTokenUrl,
+            authorizeUrl,
+            accessTokenUrl,
             clientId,
             redirectUri,
-            tenant,
             resource,
             this.tokenCache,
             this.callState);
@@ -114,7 +109,54 @@ export class AuthenticationContext {
         return result.result;
     }
 
+    public async acquireTokenAsync(
+        resource: string,
+        clientId: string,
+        redirectUri: string,
+        parameters: IPlatformParameters,
+        userId: UserIdentifier,
+        extraQueryParameters: string): Promise<AuthenticationResult> {
+
+        return await this.acquireTokenCommonAsync(
+            resource,
+            clientId,
+            redirectUri,
+            parameters,
+            userId,
+            extraQueryParameters);
+    }
+
     public clearCache(): void {
         this.tokenCache.clear();
+    }
+
+    private async acquireTokenCommonAsync(
+        resource: string,
+        clientId: string,
+        redirectUri: string,
+        parameters: IPlatformParameters,
+        userId: UserIdentifier,
+        extraQueryParameters: string = null,
+        claims: string = null): Promise<AuthenticationResult> {
+
+        const correlationId = Utils.newGuid();
+
+        const requestData: IRequestData = {
+            authenticator: this.authenticator,
+            tokenCache: this.tokenCache,
+            resource,
+            clientKey: new ClientKey(clientId),
+            extendedLifeTimeEnabled: this.extendedLifeTimeEnabled,
+            subjectType: TokenSubjectType.User,
+            correlationId,
+        };
+
+        const handler = new AcquireTokenInteractiveHandler(requestData, new URL(redirectUri), parameters, userId,
+            extraQueryParameters, this.createWebAuthenticationDialog(parameters), claims);
+        return await handler.runAsync();
+    }
+
+    private createWebAuthenticationDialog(parameters: IPlatformParameters): IWebUI {
+        throw new Error("createWebAuthenticationDialog: Not implemented!");
     }
 }

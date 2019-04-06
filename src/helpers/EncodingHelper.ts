@@ -1,4 +1,5 @@
 import { RequestContext } from "../core/RequestContext";
+import { CallState } from "../internal/CallState";
 import { Utils } from "../Utils";
 
 export class EncodingHelper {
@@ -7,8 +8,8 @@ export class EncodingHelper {
         delimiter: string,
         urlDecode: boolean,
         lowercaseKeys: boolean,
-        requestContext: RequestContext): { [key: string]: string } {
-        return EncodingHelper.parseKeyValueList(input, delimiter, urlDecode, lowercaseKeys, requestContext, true);
+        callState: CallState): Map<string, string> {
+        return EncodingHelper.parseKeyValueList(input, delimiter, urlDecode, lowercaseKeys, callState, true);
     }
 
     public static urlDecode(message: string): string {
@@ -82,15 +83,15 @@ export class EncodingHelper {
         return JSON.parse(response) as T;
     }
 
-    private static parseKeyValueList(
+    public static parseKeyValueList(
         input: string,
         delimiter: string,
         urlDecode: boolean,
         lowercaseKeys: boolean,
-        requestContext: RequestContext,
-        strict: boolean): { [key: string]: string } {
+        callState: CallState,
+        strict: boolean): Map<string, string> {
 
-        const response: { [key: string]: string } = {};
+        const response = new Map<string, string>();
 
         const queryPairs: string[] = EncodingHelper.splitWithQuotes(input, delimiter);
 
@@ -115,11 +116,11 @@ export class EncodingHelper {
                 value = value.trim();
                 value = Utils.trim(value, '\"').trim();
 
-                if (response[key] && requestContext != null) {
-                    requestContext.logger.warning(`Key/value pair list contains redundant key '${key}'.`);
+                if (response.has(key) && callState) {
+                    callState.logger.warning(`Key/value pair list contains redundant key '${key}'.`);
                 }
 
-                response[key] = value;
+                response.set(key, value);
             } else if (strict && pair.length > 2) {
                 throw new Error("Invalid Argument: input");
             }

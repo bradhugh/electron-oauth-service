@@ -109,7 +109,7 @@ export class AdalErrorMessage {
     public static integratedAuthFailed =
         "Integrated authentication failed. You may try an alternative authentication method";
 
-    public static duplicateQueryParameterTemplate = "Duplicate query parameter '{0}' in extraQueryParameters";
+    public static duplicateQueryParameter = (param: string) => `Duplicate query parameter '${param}' in extraQueryParameters`;
 
     public static deviceCertificateNotFoundTemplate = "Device Certificate was not found for {0}";
 

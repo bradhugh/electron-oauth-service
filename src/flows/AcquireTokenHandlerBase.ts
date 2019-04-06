@@ -1,4 +1,3 @@
-import { AdalError } from "../AdalError";
 import { AdalErrorCode } from "../AdalErrorCode";
 import { AdalServiceError } from "../AdalServiceError";
 import { AuthenticationResult } from "../AuthenticationResult";
@@ -9,30 +8,21 @@ import { InstanceDiscovery } from "../instance/InstanceDiscovery";
 import { ICacheQueryData } from "../internal/cache/CacheQueryData";
 import { TokenSubjectType } from "../internal/cache/TokenCacheKey";
 import { CallState } from "../internal/CallState";
+import { ClientKey } from "../internal/clientcreds/ClientKey";
+import { AdalIdHelper } from "../internal/helpers/AdalIdHelper";
 import { AdalHttpClient } from "../internal/http/AdalHttpClient";
 import { OAuthGrantType, OAuthParameter, OAuthValue } from "../internal/oauth2/OAuthConstants";
 import { TokenResponse } from "../internal/oauth2/TokenResponse";
+import { PlatformInformation } from "../internal/platform/PlatformInformation";
 import { IRequestData } from "../internal/RequestData";
 import { DictionaryRequestParameters, IRequestParameters } from "../internal/RequestParameters";
 import { TokenCache } from "../TokenCache";
 import { TokenCacheNotificationArgs } from "../TokenCacheNotificationArgs";
+import { UserIdentifierType } from "../UserIdentifier";
 import { Utils } from "../Utils";
 import { BrokerParameter } from "./BrokerParameter";
 
-export class ClientKey {
-    constructor(public clientId: string) {}
-
-    public addToParameters(parameters: Map<string, string>): void {
-        if (this.clientId) {
-            parameters.set(OAuthParameter.clientId, this.clientId);
-        }
-
-        // TODO: Credential, Assertion, Certificate
-    }
-}
-
-// tslint:disable-next-line: max-classes-per-file
-export class AcquireTokenHandlerBase {
+export abstract class AcquireTokenHandlerBase {
 
     public static createCallState(correlationId: string): CallState {
         correlationId = (correlationId !== Utils.guidEmpty) ? correlationId : Utils.newGuid();
@@ -43,7 +33,7 @@ export class AcquireTokenHandlerBase {
 
     public callState: CallState;
 
-    protected supportAdfs: boolean;
+    protected supportADFS: boolean;
     protected authenticator: Authenticator;
     protected resource: string;
     protected clientKey: ClientKey;
@@ -53,9 +43,11 @@ export class AcquireTokenHandlerBase {
     protected displayableId: string;
     protected loadFromCache: boolean = false;
     protected storeToCache: boolean = false;
+    protected platformInformation = new PlatformInformation();
+    protected brokerParameters: Map<string, string> = null;
+    protected userIdentifierType: UserIdentifierType;
 
     private tokenCache: TokenCache;
-    private brokerParameters: { [key: string]: string } = null;
     private cacheQueryData: ICacheQueryData = null;
     private client: AdalHttpClient = null;
 
@@ -76,23 +68,27 @@ export class AcquireTokenHandlerBase {
 
         this.loadFromCache = !!this.tokenCache;
         this.storeToCache = !!this.tokenCache;
-        this.supportAdfs = false;
+        this.supportADFS = false;
 
-        this.brokerParameters = {};
-        this.brokerParameters[BrokerParameter.authority] = requestData.authenticator.authority;
-        this.brokerParameters[BrokerParameter.resource] = requestData.resource;
-        this.brokerParameters[BrokerParameter.clientId] = requestData.clientKey.clientId;
-        this.brokerParameters[BrokerParameter.correlationId] = this.callState.correlationId;
-        this.brokerParameters[BrokerParameter.clientVersion] = "3"; // TODO: Version?
+        this.brokerParameters = new Map<string, string>();
+        this.brokerParameters.set(BrokerParameter.authority, requestData.authenticator.authority);
+        this.brokerParameters.set(BrokerParameter.resource, requestData.resource);
+        this.brokerParameters.set(BrokerParameter.clientId, requestData.clientKey.clientId);
+        this.brokerParameters.set(BrokerParameter.correlationId, this.callState.correlationId);
+        this.brokerParameters.set(BrokerParameter.clientVersion, AdalIdHelper.getClientVersion());
 
         this.resultEx = null;
 
         this.cacheQueryData.extendedLifeTimeEnabled = requestData.extendedLifeTimeEnabled;
 
-        // TODO: Do I need brokerHelper?
-        this.callState.logger.info("EOAS is running...");
+        let msg = `ADAL ${this.platformInformation.getProductName()} ` +
+            `with assembly version '${AdalIdHelper.getAdalVersion()}', ` +
+            `file version '${AdalIdHelper.getAssemblyFileVersion()}' and ` +
+            `informational version '${AdalIdHelper.getAssemblyInformationalVersion()}' is running...`;
 
-        let msg = "=== Token Acquisition started: \n\t" +
+        this.callState.logger.info(msg);
+
+        msg = "=== Token Acquisition started: \n\t" +
             `Authentication Target: ${TokenSubjectType[requestData.subjectType]}\n\t`;
 
         if (InstanceDiscovery.isWhitelisted(requestData.authenticator.getAuthorityHost())) {
@@ -163,15 +159,34 @@ export class AcquireTokenHandlerBase {
         }
     }
 
+    protected abstract addAditionalRequestParameters(requestParameters: DictionaryRequestParameters): void;
+
+    protected preTokenRequestAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    protected async updateAuthorityAsync(updatedAuthority: string): Promise<void> {
+        if (this.authenticator.authority !== updatedAuthority) {
+            await this.authenticator.updateAuthorityAsync(updatedAuthority, this.callState);
+            this.validateAuthorityType();
+        }
+    }
+
     protected async preRunAsync(): Promise<void> {
         await this.authenticator.updateFromTemplateAsync(this.callState);
         this.validateAuthorityType();
     }
 
     protected validateAuthorityType(): void {
-        if (!this.supportAdfs && this.authenticator.authorityType === AuthorityType.ADFS) {
+        if (!this.supportADFS && this.authenticator.authorityType === AuthorityType.ADFS) {
             throw new Error(`Invalid Authority Type Template ${this.authenticator.authority}`);
         }
+    }
+
+    protected async sendTokenRequestAsync(): Promise<AuthenticationResultEx> {
+        const requestParameters = new DictionaryRequestParameters(this.resource, this.clientKey);
+        this.addAditionalRequestParameters(requestParameters);
+        return await this.sendHttpMessageAsync(requestParameters);
     }
 
     protected async sendTokenRequestByRefreshTokenAsync(refreshToken: string): Promise<AuthenticationResultEx> {

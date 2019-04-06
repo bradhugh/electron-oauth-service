@@ -1,5 +1,5 @@
-import { ClientKey } from "../flows/AcquireTokenHandlerBase";
 import { EncodingHelper } from "../helpers/EncodingHelper";
+import { ClientKey } from "./clientcreds/ClientKey";
 import { OAuthParameter } from "./oauth2/OAuthConstants";
 
 // tslint:disable: max-classes-per-file

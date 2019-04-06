@@ -1,5 +1,3 @@
-import { RequestContext } from "../core/RequestContext";
-import { IServiceBundle } from "../core/ServiceBundle";
 import { CallState } from "../internal/CallState";
 import { Utils } from "../Utils";
 import { InstanceDiscovery } from "./InstanceDiscovery";
@@ -55,7 +53,6 @@ export class Authenticator {
     private _updatedFromTemplate = false;
     private _authority: string = null;
     private _authorityType: AuthorityType = AuthorityType.AAD;
-    private _serviceBundle: IServiceBundle = null;
     private _authorizationUri: string = null;
     private _deviceCodeUri: string = null;
     private _tokenUri: string = null;
@@ -73,10 +70,6 @@ export class Authenticator {
 
     public get authorityType(): AuthorityType {
         return this._authorityType;
-    }
-
-    public get serviceBundle(): IServiceBundle {
-        return this._serviceBundle;
     }
 
     public get authorizationUri(): string {
@@ -103,8 +96,8 @@ export class Authenticator {
         return this._tokenUri;
     }
 
-    constructor(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean) {
-        this.init(serviceBundle, authority, validateAuthority);
+    constructor(authority: string, validateAuthority: boolean) {
+        this.init(authority, validateAuthority);
     }
 
     public getAuthorityHost() {
@@ -119,11 +112,10 @@ export class Authenticator {
     }
 
     public async updateAuthorityAsync(
-        serviceBundle: IServiceBundle,
         authority: string,
         callState: CallState): Promise<void> {
 
-        this.init(serviceBundle, authority, this.validateAuthority);
+        this.init(authority, this.validateAuthority);
 
         this._updatedFromTemplate = false;
         await this.updateFromTemplateAsync(callState);
@@ -140,7 +132,7 @@ export class Authenticator {
             const segments = authorityUri.pathname.split("/");
             const tenant: string = segments[segments.length - 1];
             if (this.authorityType === AuthorityType.AAD) {
-                const metadata = await this.serviceBundle.instanceDiscovery.getMetadataEntryAsync(
+                const metadata = await InstanceDiscovery.getMetadataEntryAsync(
                     authorityUri,
                     this.validateAuthority,
                     callState);
@@ -149,7 +141,7 @@ export class Authenticator {
                 // All the endpoints will use this updated host, and it affects future network calls, as desired.
                 // The Authority remains its original host, and will be used in TokenCache later.
             } else {
-                this.serviceBundle.instanceDiscovery.addMetadataEntry(host);
+                InstanceDiscovery.addMetadataEntry(host);
             }
 
             this._authorizationUri = InstanceDiscovery.formatAuthorizeEndpoint(host, tenant);
@@ -162,7 +154,7 @@ export class Authenticator {
         }
     }
 
-    private init(serviceBundle: IServiceBundle, authority: string, validateAuthority: boolean): void {
+    private init(authority: string, validateAuthority: boolean): void {
 
         this._authority = Authenticator.ensureUrlEndsWithForwardSlash(authority);
         this._authorityType = Authenticator.detectAuthorityType(authority);
@@ -172,7 +164,6 @@ export class Authenticator {
         }
 
         this._validateAuthority = true;
-        this._serviceBundle = serviceBundle;
     }
 
     private replaceTenantlessTenant(tenantId: string): void {
