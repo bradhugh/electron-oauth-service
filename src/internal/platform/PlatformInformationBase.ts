@@ -1,5 +1,4 @@
 import { CallState } from "../CallState";
-import { AdalIdHelper } from "../helpers/AdalIdHelper";
 import { OAuthParameter, PromptValue } from "../oauth2/OAuthConstants";
 import { DictionaryRequestParameters } from "../RequestParameters";
 import { IPlatformParameters } from "./IPlatformParameters";
@@ -13,7 +12,7 @@ export abstract class PlatformInformationBase {
     public abstract getDeviceModel(): string;
 
     public getAssemblyFileVersionAttribute(): string {
-        return AdalIdHelper.versionNotDetermined;
+        return "0.0.0.0";
     }
 
     public async isUserLocalAsync(callState: CallState): Promise<boolean> {
