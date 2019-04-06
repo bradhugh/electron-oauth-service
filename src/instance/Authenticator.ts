@@ -23,8 +23,8 @@ export class Authenticator {
         }
 
         const authorityUri = new URL(authority);
-        if (authorityUri.protocol !== "https") {
-            throw new Error("authority must be HTTPS");
+        if (authorityUri.protocol !== "https:") {
+            throw new Error(`authority must be HTTPS, not '${authorityUri.protocol}'`);
         }
 
         const path: string = authorityUri.pathname.substring(1);

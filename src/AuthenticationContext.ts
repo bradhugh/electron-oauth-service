@@ -1,6 +1,4 @@
 import { AuthenticationResult } from "./AuthenticationResult";
-import { ConsoleLogger } from "./core/AdalLogger";
-import { ICoreLogger } from "./core/CoreLoggerBase";
 import { Authenticator } from "./instance/Authenticator";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { CallState } from "./internal/CallState";
@@ -8,6 +6,7 @@ import { ClientKey } from "./internal/clientcreds/ClientKey";
 import { AcquireTokenInteractiveHandler } from "./internal/flows/AcquireTokenInteractiveHandler";
 import { IPlatformParameters } from "./internal/platform/IPlatformParameters";
 import { IWebUI } from "./internal/platform/IWebUI";
+import { WebUIFactoryProvider } from "./internal/platform/WebUIFactoryProvider";
 import { IRequestData } from "./internal/RequestData";
 import { TokenCache } from "./TokenCache";
 import { UserIdentifier } from "./UserIdentifier";
@@ -157,6 +156,6 @@ export class AuthenticationContext {
     }
 
     private createWebAuthenticationDialog(parameters: IPlatformParameters): IWebUI {
-        throw new Error("createWebAuthenticationDialog: Not implemented!");
+        return WebUIFactoryProvider.webUIFactory.createAuthenticationDialog(parameters);
     }
 }

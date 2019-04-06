@@ -259,4 +259,3 @@ export class AcquireTokenInteractiveHandler extends AcquireTokenHandlerBase {
         }
     }
 }
-
