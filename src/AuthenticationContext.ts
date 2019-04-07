@@ -116,6 +116,9 @@ export class AuthenticationContext {
         userId: UserIdentifier,
         extraQueryParameters: string): Promise<AuthenticationResult> {
 
+        // Temp hack
+        userId = new UserIdentifier(userId.id, userId.type);
+
         return await this.acquireTokenCommonAsync(
             resource,
             clientId,

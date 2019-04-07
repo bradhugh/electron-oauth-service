@@ -8,6 +8,7 @@ export class InteractiveWebUI implements IWebUI {
         redirectUri: URL,
         callState: CallState): Promise<AuthorizationResult> {
 
+        callState.logger.infoPii(`Authorization URL: ${authorizationUri.href}`);
         throw new Error("InteractiveWebUI.acquireAuthorizationAsync not implemented.");
     }
 }
