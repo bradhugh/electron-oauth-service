@@ -120,10 +120,8 @@ export abstract class AcquireTokenHandlerBase {
         let extendedLifetimeResultEx: AuthenticationResultEx = null;
 
         try {
-            this.callState.logger.info("preRunAsync");
             await this.preRunAsync();
 
-            this.callState.logger.info(`Load from cache? ${this.loadFromCache}`);
             if (this.loadFromCache) {
                 this.callState.logger.verbose("Loading from cache.");
 
@@ -149,9 +147,6 @@ export abstract class AcquireTokenHandlerBase {
                     }
                 }
             }
-
-            this.callState.logger.info(
-                `After cache and refresh: ${this.resultEx ? JSON.stringify(this.resultEx) : "null"}`);
 
             if (!this.resultEx || this.resultEx.error) {
                 this.callState.logger.info("preTokenRequestAsync");

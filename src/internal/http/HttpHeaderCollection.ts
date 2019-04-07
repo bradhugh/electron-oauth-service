@@ -3,7 +3,23 @@
 // that can hold multiple values of the same header.
 // Similar to .NET WebHeaderCollection
 
+export interface IHttpHeader {
+    name: string;
+    value: string;
+}
+
 export class HttpHeaderCollection {
+
+    public static fromElectronHeaders(headers: any): HttpHeaderCollection {
+        const result = new HttpHeaderCollection();
+        const keys: string[] = Object.keys(headers);
+        for (const key of keys) {
+            result.headerDictionary.set(key, headers[key]);
+        }
+
+        return result;
+    }
+
     private headerDictionary: Map<string, string[]> = new Map<string, string[]>();
 
     public get(headerName: string): string {
@@ -57,5 +73,19 @@ export class HttpHeaderCollection {
             values.push(headerValue);
             this.headerDictionary.set(headerKey, values);
         }
+    }
+
+    public getAllEntries(): IHttpHeader[] {
+        const entries: IHttpHeader[] = [];
+        for (const kvp of this.headerDictionary) {
+            const headerValues = kvp["1"];
+            if (headerValues) {
+                for (const value of headerValues) {
+                    entries.push({ name: kvp["0"], value });
+                }
+            }
+        }
+
+        return entries;
     }
 }
