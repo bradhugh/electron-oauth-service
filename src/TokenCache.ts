@@ -11,6 +11,11 @@ import { TokenCacheItem } from "./TokenCacheItem";
 import { TokenCacheNotificationArgs } from "./TokenCacheNotificationArgs";
 import { Utils } from "./Utils";
 
+interface ISerializedTokenStore {
+    version: number;
+    entries: { [key: string]: string };
+}
+
 export class TokenCache extends EventEmitter {
 
     private static delimiter: string = ":::";
@@ -34,6 +39,10 @@ export class TokenCache extends EventEmitter {
     // Constructor that receives the optional state of the cache
     constructor(private logger: ICoreLogger, state?: Buffer) {
         super();
+
+        if (!logger) {
+            this.logger = TokenCache.logger;
+        }
 
         if (state) {
             this.deserialize(state);
@@ -69,8 +78,17 @@ export class TokenCache extends EventEmitter {
     /// </summary>
     /// <returns>Current state of the cache as a blob</returns>
     public serialize(): Buffer {
-        // TODO: do I really need a version number?
-        const serialized = JSON.stringify(this.tokenCacheDictionary);
+        const store: ISerializedTokenStore = {
+            version: 1,
+            entries: {},
+        };
+
+        for (const entry of this.tokenCacheDictionary) {
+            const result = entry["1"];
+            store.entries[entry["0"]] = result.serialize();
+        }
+
+        const serialized = JSON.stringify(store);
         return new Buffer(serialized, "utf8");
     }
 
@@ -86,9 +104,19 @@ export class TokenCache extends EventEmitter {
         }
 
         const serialized = state.toString("utf8");
+        const store = JSON.parse(serialized) as ISerializedTokenStore;
+        if (store.version !== 1) {
+            this.logger.warning(`Unexpected serialized TokenCache version ${store.version}`);
+            return;
+        }
 
-        // TODO: clearly need some validation of the data here
-        this.tokenCacheDictionary = JSON.parse(serialized);
+        this.tokenCacheDictionary.clear();
+        const keys = Object.keys(store.entries);
+        for (const key of keys) {
+            this.tokenCacheDictionary.set(
+                key,
+                AuthenticationResultEx.deserialize(store.entries[key]));
+        }
     }
 
     /// <summary>
@@ -99,12 +127,12 @@ export class TokenCache extends EventEmitter {
         const args = new TokenCacheNotificationArgs();
         args.tokenCache = this;
 
-        this.emit("beforeAccess", args);
+        this.onBeforeAccess(args);
         const result: TokenCacheItem[] = [];
 
         // TODO: Enumerate the items and add them to result
 
-        this.emit("afterAccess", args);
+        this.onAfterAccess(args);
         return result;
     }
 
@@ -120,8 +148,8 @@ export class TokenCache extends EventEmitter {
         args.uniqueId = item.uniqueId;
         args.displayableId = item.displayableId;
 
-        this.emit("beforeAccess", args);
-        this.emit("beforeWrite", args);
+        this.onBeforeAccess(args);
+        this.onBeforeWrite(args);
 
         let toRemoveStringKey: string = null;
 
@@ -142,22 +170,22 @@ export class TokenCache extends EventEmitter {
         }
 
         this.hasStateChanged = true;
-        this.emit("onAfterAccess", args);
+        this.onAfterAccess(args);
     }
 
     public clear(): void {
         const args = new TokenCacheNotificationArgs();
         args.tokenCache = this;
 
-        this.emit("beforeAccess", args);
-        this.emit("beforeWrite", args);
+        this.onBeforeAccess(args);
+        this.onBeforeWrite(args);
 
         // clear the token cache
         this.tokenCacheDictionary.clear();
         // CallState.Default.Logger.Information(null, "Successfully Cleared Cache");
 
         this.hasStateChanged = true;
-        this.emit("onafterAccess", args);
+        this.onAfterAccess(args);
     }
 
     public storeToCacheAsync(
@@ -177,7 +205,7 @@ export class TokenCache extends EventEmitter {
         args.clientId = clientId;
         args.uniqueId = uniqueId;
         args.displayableId = displayableId;
-        this.emit("beforeWrite", args);
+        this.onBeforeWrite(args);
 
         const key = new TokenCacheKey(authority, resource, clientId, subjectType, uniqueId, displayableId);
         this.tokenCacheDictionary.set(key.toStringKey(), result);
@@ -256,6 +284,16 @@ export class TokenCache extends EventEmitter {
         }
 
         return resultEx;
+    }
+
+    public on(
+        event: "beforeWrite" | "beforeAccess" | "afterAccess",
+        listener: (args: TokenCacheNotificationArgs) => void): this {
+        return super.on(event, listener);
+    }
+
+    public onBeforeWrite(args: TokenCacheNotificationArgs) {
+        this.emit("beforeWrite", args);
     }
 
     public onBeforeAccess(args: TokenCacheNotificationArgs) {

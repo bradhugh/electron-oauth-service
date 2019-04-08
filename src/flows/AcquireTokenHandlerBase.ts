@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { AdalErrorCode } from "../AdalErrorCode";
 import { AdalServiceError } from "../AdalServiceError";
 import { AuthenticationResult } from "../AuthenticationResult";
@@ -250,15 +251,17 @@ export abstract class AcquireTokenHandlerBase {
 
     private logReturnedToken(result: AuthenticationResult): void {
         if (result.accessToken) {
-            // TODO: for now, just log the AT CryptographyHelper.CreateSha256Hash(result.AccessToken);
-            const accessTokenHash = result.accessToken;
+            const accessTokenHash = crypto
+                .createHash("sha256")
+                .update(result.accessToken, "utf8")
+                .digest("hex");
 
             // tslint:disable-next-line: max-line-length
             const msg = `=== Token Acquisition finished successfully. An access token was returned: Expiration Time: ${result.expiresOn}`;
             this.callState.logger.info(msg);
 
             const userId = result.userInfo != null ? result.userInfo.uniqueId : "null";
-            const piiMsg = msg + `Access Token Hash: ${accessTokenHash}\n\t User id: ${userId}`;
+            const piiMsg = msg + ` Access Token Hash: ${accessTokenHash}\n\t User id: ${userId}`;
             this.callState.logger.infoPii(piiMsg);
         }
     }

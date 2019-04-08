@@ -2,8 +2,36 @@ import { AuthenticationResult } from "./AuthenticationResult";
 
 export class AuthenticationResultEx {
 
+    public static staticClone(clone: AuthenticationResultEx, source: AuthenticationResultEx) {
+        clone.userAssertionHash = source.userAssertionHash;
+        clone.error = source.error;
+        clone.refreshToken = source.refreshToken;
+        clone.resourceInResponse = source.resourceInResponse;
+        clone.result = new AuthenticationResult(
+            source.result.accessTokenType,
+            source.result.accessToken,
+            source.result.expiresOn,
+            source.result.extendedExpiresOn);
+
+        clone.result.extendedLifeTimeToken = source.result.extendedLifeTimeToken;
+        clone.result.idToken = source.result.idToken;
+        clone.result.tenantId = source.result.tenantId;
+        clone.result.userInfo = source.result.userInfo;
+    }
+
     public static deserialize(serializedObject: string): AuthenticationResultEx {
-        return JSON.parse(serializedObject) as AuthenticationResultEx;
+        const deserialized =  JSON.parse(serializedObject, (key, value) => {
+            switch (key) {
+                case "expiresOn":
+                case "extendedExpiresOn":
+                    return new Date(value);
+            }
+
+            return value;
+        }) as AuthenticationResultEx;
+        const clone = new AuthenticationResultEx();
+        AuthenticationResultEx.staticClone(clone, deserialized);
+        return clone;
     }
 
     public result: AuthenticationResult;
@@ -19,20 +47,7 @@ export class AuthenticationResultEx {
 
     public clone(): AuthenticationResultEx {
         const cloned = new AuthenticationResultEx();
-        cloned.userAssertionHash = this.userAssertionHash;
-        cloned.error = this.error;
-        cloned.refreshToken = this.refreshToken;
-        cloned.resourceInResponse = this.resourceInResponse;
-        cloned.result = new AuthenticationResult(
-            this.result.accessTokenType,
-            this.result.accessToken,
-            this.result.expiresOn,
-            this.result.extendedExpiresOn);
-
-        cloned.result.extendedLifeTimeToken = this.result.extendedLifeTimeToken;
-        cloned.result.idToken = this.result.idToken;
-        cloned.result.tenantId = this.result.tenantId;
-        cloned.result.userInfo = this.result.userInfo;
+        AuthenticationResultEx.staticClone(cloned, this);
 
         return cloned;
     }
