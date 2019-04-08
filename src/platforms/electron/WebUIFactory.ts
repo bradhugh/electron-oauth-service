@@ -17,7 +17,7 @@ export class WebUIFactory implements IWebUIFactory {
             case PromptBehavior.Always:
             case PromptBehavior.SelectAccount:
             case PromptBehavior.RefreshSession:
-                return new InteractiveWebUI();
+                return new InteractiveWebUI(parameters.ownerWindow);
             case PromptBehavior.Never:
                 throw new Error("SilentWebUI not supported yet!");
             default:

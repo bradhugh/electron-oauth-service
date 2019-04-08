@@ -116,16 +116,18 @@ export class AuthenticationContext {
         userId: UserIdentifier,
         extraQueryParameters: string): Promise<AuthenticationResult> {
 
-        // Temp hack
+        // Do this just in case our passed in user doesn't have the UserIdentifier prototype
         userId = new UserIdentifier(userId.id, userId.type);
 
-        return await this.acquireTokenCommonAsync(
+        const result = await this.acquireTokenCommonAsync(
             resource,
             clientId,
             redirectUri,
             parameters,
             userId,
             extraQueryParameters);
+
+        return result;
     }
 
     public clearCache(): void {
@@ -155,7 +157,8 @@ export class AuthenticationContext {
 
         const handler = new AcquireTokenInteractiveHandler(requestData, new URL(redirectUri), parameters, userId,
             extraQueryParameters, this.createWebAuthenticationDialog(parameters), claims);
-        return await handler.runAsync();
+        const result = await handler.runAsync();
+        return result;
     }
 
     private createWebAuthenticationDialog(parameters: IPlatformParameters): IWebUI {

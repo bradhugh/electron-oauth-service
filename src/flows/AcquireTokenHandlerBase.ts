@@ -12,7 +12,7 @@ import { ClientKey } from "../internal/clientcreds/ClientKey";
 import { AdalIdHelper } from "../internal/helpers/AdalIdHelper";
 import { AdalHttpClient } from "../internal/http/AdalHttpClient";
 import { OAuthGrantType, OAuthParameter, OAuthValue } from "../internal/oauth2/OAuthConstants";
-import { TokenResponse } from "../internal/oauth2/TokenResponse";
+import { IJsonTokenResponse, TokenResponse } from "../internal/oauth2/TokenResponse";
 import { PlatformInformation } from "../internal/platform/PlatformInformation";
 import { IRequestData } from "../internal/RequestData";
 import { DictionaryRequestParameters, IRequestParameters } from "../internal/RequestParameters";
@@ -149,11 +149,9 @@ export abstract class AcquireTokenHandlerBase {
             }
 
             if (!this.resultEx || this.resultEx.error) {
-                this.callState.logger.info("preTokenRequestAsync");
                 await this.preTokenRequestAsync();
 
-                this.callState.logger.info("sendTokenRequestAsync");
-                await this.sendTokenRequestAsync();
+                this.resultEx = await this.sendTokenRequestAsync();
 
                 if (this.resultEx && this.resultEx.error) {
                     throw this.resultEx.error;
@@ -269,7 +267,8 @@ export abstract class AcquireTokenHandlerBase {
         this.client = new AdalHttpClient(this.authenticator.tokenUri, this.callState);
         this.client.client.bodyParameters = requestParameters;
 
-        const tokenResponse: TokenResponse = await this.client.getResponseAsync<TokenResponse>();
+        const jsonResponse = await this.client.getResponseAsync<IJsonTokenResponse>();
+        const tokenResponse = TokenResponse.fromJson(jsonResponse);
         return tokenResponse.getResult();
     }
 
