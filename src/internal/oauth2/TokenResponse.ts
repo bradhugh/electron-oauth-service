@@ -149,7 +149,7 @@ export class TokenResponse {
                 userInfo.passwordExpiresOn = passwordExpiresOffest;
                 userInfo.passwordChangeUrl = changePasswordUri;
 
-                result.updateTenantAndUserInfo(tenantId, this.idTokenString, userInfo)
+                result.updateTenantAndUserInfo(tenantId, this.idTokenString, userInfo);
 
                 result.authority = this.authority;
             }
