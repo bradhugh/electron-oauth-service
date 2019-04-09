@@ -89,7 +89,7 @@ export class TokenCache extends EventEmitter {
         }
 
         const serialized = JSON.stringify(store);
-        return new Buffer(serialized, "utf8");
+        return Buffer.from(serialized, "utf8");
     }
 
     /// <summary>
