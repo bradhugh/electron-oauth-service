@@ -138,9 +138,9 @@ export abstract class AcquireTokenHandlerBase {
                 this.resultEx = await this.tokenCache.loadFromCacheAsync(this.cacheQueryData, this.callState);
                 extendedLifetimeResultEx = this.resultEx;
 
-                if (this.resultEx && this.resultEx.result &&
-                    ((!this.resultEx.result.accessToken && !this.resultEx.refreshToken) ||
-                    (this.resultEx.result.extendedLifeTimeToken && this.resultEx.refreshToken))) {
+                if (this.resultEx && this.resultEx.result && (
+                        (!this.resultEx.result.accessToken && this.resultEx.refreshToken) ||
+                        (this.resultEx.result.extendedLifeTimeToken && this.resultEx.refreshToken))) {
 
                     this.resultEx = await this.refreshAccessTokenAsync(this.resultEx);
                     if (this.resultEx && !this.resultEx.error) {

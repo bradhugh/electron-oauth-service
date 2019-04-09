@@ -56,58 +56,6 @@ export class AuthenticationContext {
         return new AuthenticationResult(null, null, null);
     }
 
-    public async acquireTokenAsyncOld(
-        resource: string,
-        clientId: string,
-        redirectUri: string,
-        authorizeUrl: string,
-        accessTokenUrl: string): Promise<AuthenticationResult> {
-
-        // Check if token is in the cache
-        let result = this.tokenCache.loadFromCacheAsync({
-            authority: this.authority,
-            resource,
-            clientId,
-            subjectType: TokenSubjectType.Client,
-            extendedLifeTimeEnabled: false,
-        },
-        this.callState);
-
-        // We found a valid token in the cache
-        if (result && result.result && result.result.accessToken) {
-            return result.result;
-        }
-
-        // Token is expired, but we have a refresh token
-        if (result && result.refreshToken) {
-            result = await Utils.refreshAccessTokenAsync(
-                accessTokenUrl,
-                this.authority,
-                resource,
-                clientId,
-                result,
-                this.tokenCache,
-                this.callState);
-
-            if (result && result.result && result.result.accessToken) {
-                return result.result;
-            }
-        }
-
-        // Get the token interactively if needed
-        result = await Utils.getAuthTokenInteractiveAsync(
-            this.authority,
-            authorizeUrl,
-            accessTokenUrl,
-            clientId,
-            redirectUri,
-            resource,
-            this.tokenCache,
-            this.callState);
-
-        return result.result;
-    }
-
     public async acquireTokenAsync(
         resource: string,
         clientId: string,
