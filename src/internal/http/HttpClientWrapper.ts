@@ -6,12 +6,10 @@ import { OAuthHeader } from "../oauth2/OAuthConstants";
 import { IHttpClient } from "../platform/IHttpClient";
 import { IRequestParameters, StringRequestParameters } from "../RequestParameters";
 import { HttpHeaderCollection } from "./HttpHeaderCollection";
+import { HttpRequestAbortedError } from "./HttpRequestAbortedError";
 import { IHttpWebResponse } from "./IHttpWebResponse";
 
 export class HttpClientWrapper implements IHttpClient {
-    public static async createResponseAsync(response: any): Promise<any> { // TODO: IHttpWebResponse or something?
-        throw new Error("HttpClientWrapper.createResponseAsync NOT IMPLEMENTED");
-    }
 
     public bodyParameters: IRequestParameters;
 
@@ -126,13 +124,21 @@ export class HttpClientWrapper implements IHttpClient {
                 });
 
                 response.on("error", (error: Error) => {
-                    reject(error);
+                    const ex = new HttpRequestWrapperError(null, error);
+                    reject(ex);
+                });
+
+                response.on("aborted", () => {
+                    const ex = new HttpRequestWrapperError(null, new HttpRequestAbortedError());
+                    reject(ex);
                 });
             });
 
             if (bodyContent) {
                 request.write(bodyContent, "utf8");
             }
+
+            // TODO: Need to set up a timer to abort request after timeout
 
             request.end();
         });

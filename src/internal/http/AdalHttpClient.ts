@@ -1,13 +1,16 @@
+import { AdalClaimChallengeException } from "../../AdalClaimChallengeError";
 import { AdalErrorCode } from "../../AdalErrorCode";
 import { AdalServiceError } from "../../AdalServiceError";
 import { EncodingHelper } from "../../helpers/EncodingHelper";
 import { Utils } from "../../Utils";
 import { CallState } from "../CallState";
 import { AdalIdHelper } from "../helpers/AdalIdHelper";
+import { HttpRequestWrapperError } from "../HttpRequestWrapperError";
+import { TokenResponse } from "../oauth2/TokenResponse";
 import { IHttpClient } from "../platform/IHttpClient";
 import { IRequestParameters } from "../RequestParameters";
 import { HttpClientWrapper } from "./HttpClientWrapper";
-import { HttpStatusCode } from "./HttpStatusCode";
+import { HttpRequestAbortedError } from "./HttpRequestAbortedError";
 import { IHttpWebResponse } from "./IHttpWebResponse";
 
 export class AdalHttpClient {
@@ -61,74 +64,72 @@ export class AdalHttpClient {
             typedResponse = EncodingHelper.deserializeResponse<T>(response.responseString);
         } catch (error) {
 
-            throw error;
+            if (!(error instanceof HttpRequestWrapperError)) {
+                throw error;
+            }
 
-            // const ex = error as HttpRequestWrapperException;
-            // if (!ex) {
-            //     throw error;
-            // }
+            const ex = error as HttpRequestWrapperError;
 
-            // if (ex.InnerException instanceof TaskCanceledException) {
-            //     this.resiliency = true;
+            if (ex.innerError instanceof HttpRequestAbortedError) {
+                this.resiliency = true;
 
-            //     this._callState.logger.info("Network timeout, Exception type: " + ex.InnerException.GetType());
-            //     this._callState.logger.infoPii("Network timeout, Exception message: " + ex.InnerException.Message);
-            // }
+                this._callState.logger.info(`Network timeout.`);
+                this._callState.logger.infoPii(`Network timeout, Exception ${ex}`);
+            }
 
-            // if (!this.resiliency && ex.WebResponse == null)
-            // {
-            //     this._callState.logger.errorExPii(ex);
-            //     throw new AdalServiceError(AdalErrorCode.unknown, null, null, ex);
-            // }
+            if (!this.resiliency && !ex.webResponse) {
+                this._callState.logger.errorExPii(ex);
+                throw new AdalServiceError(AdalErrorCode.unknown, null, null, ex);
+            }
 
-            // // check for resiliency
-            // if (!this.resiliency && ex.webResponse.statusCode >= 500 && ex.webResponse.statusCode < 600) {
-            //     this._callState.logger.info(
-            //         "HttpStatus code: " + ex.WebResponse.StatusCode + ", Exception type: <??>");
+            // check for resiliency
+            if (!this.resiliency && ex.webResponse.statusCode >= 500 && ex.webResponse.statusCode < 600) {
+                this._callState.logger.info(
+                    "HttpStatus code: " + ex.webResponse.statusCode + ", Exception type: <??>");
 
-            //     this._callState.logger.infoPii(
-            //         "HttpStatus code: " + ex.WebResponse.StatusCode + ", Exception message: " +
-            //         ex.InnerException ?  ex.InnerException.message : "");
+                this._callState.logger.infoPii(
+                    "HttpStatus code: " + ex.webResponse.statusCode + ", Exception message: " +
+                    ex.innerError ?  ex.innerError.message : "");
 
-            //     this.resiliency = true;
-            // }
+                this.resiliency = true;
+            }
 
-            // if (this.resiliency) {
-            //     if (this.retryOnce) {
-            //         await Utils.delay(AdalHttpClient.delayTimePeriodMilliSeconds);
-            //         this.retryOnce = false;
+            if (this.resiliency) {
+                if (this.retryOnce) {
+                    await Utils.delay(AdalHttpClient.delayTimePeriodMilliSeconds);
+                    this.retryOnce = false;
 
-            //         const msg = "Retrying one more time..";
-            //         this._callState.logger.info(msg);
+                    const msg = "Retrying one more time..";
+                    this._callState.logger.info(msg);
 
-            //         return await this.getResponseAsync<T>(respondToDeviceAuthChallenge);
-            //     }
+                    return await this.getResponseAsync<T>(respondToDeviceAuthChallenge);
+                }
 
-            //     this._callState.logger.info(
-            //         "Retry Failed, Exception type: ???");
-            //     this._callState.logger.infoPii(
-            //         "Retry Failed, Exception message: " + ex.InnerException ? ex.InnerException.message : "");
-            // }
+                this._callState.logger.info(
+                    "Retry Failed, Exception type: ???");
+                this._callState.logger.infoPii(
+                    "Retry Failed, Exception message: " + ex.innerError ? ex.innerError.message : "");
+            }
 
-            // if (!this.isDeviceAuthChallenge(ex.WebResponse, respondToDeviceAuthChallenge)) {
-            //     const tokenResponse: TokenResponse = TokenResponse.createFromErrorResponse(ex.WebResponse);
-            //     const errorCodes: string[] = tokenResponse.ErrorCodes ?
-            //         tokenResponse.ErrorCodes : [ ex.WebResponse.StatusCode.toString() ];
-            //     const serviceEx: AdalServiceError = new AdalServiceError(tokenResponse.Error,
-            //         tokenResponse.ErrorDescription,
-            //         errorCodes, ex);
+            if (!this.isDeviceAuthChallenge(ex.webResponse, respondToDeviceAuthChallenge)) {
+                const tokenResponse: TokenResponse = TokenResponse.createFromErrorResponse(ex.webResponse);
+                const errorCodes: string[] = tokenResponse.errorCodes ?
+                    tokenResponse.errorCodes : [ ex.webResponse.statusCode.toString() ];
+                const serviceEx: AdalServiceError = new AdalServiceError(tokenResponse.error,
+                    tokenResponse.errorDescription,
+                    errorCodes, ex);
 
-            //     if (ex.WebResponse.StatusCode === 400 &&
-            //         tokenResponse.Error === AdalErrorCode.interactionRequired) {
-            //         throw new AdalClaimChallengeException(
-            //             tokenResponse.Error, tokenResponse.ErrorDescription, ex, tokenResponse.Claims);
-            //     }
+                if (ex.webResponse.statusCode === 400 &&
+                    tokenResponse.error === AdalErrorCode.interactionRequired) {
+                    throw new AdalClaimChallengeException(
+                        tokenResponse.error, tokenResponse.errorDescription, ex, tokenResponse.claims);
+                }
 
-            //     throw serviceEx;
-            // }
+                throw serviceEx;
+            }
 
             // attempt device auth
-            // return await this.handleDeviceAuthChallengeAsync<T>(ex.WebResponse);
+            return await this.handleDeviceAuthChallengeAsync<T>(ex.webResponse);
         }
 
         return typedResponse;
@@ -161,7 +162,7 @@ export class AdalHttpClient {
         return data;
     }
 
-    private async HandleDeviceAuthChallengeAsync<T>(response: IHttpWebResponse): Promise<T> {
+    private async handleDeviceAuthChallengeAsync<T>(response: IHttpWebResponse): Promise<T> {
         const responseDictionary: Map<string, string> = this.ParseChallengeData(response);
 
         if (!responseDictionary.has("SubmitUrl")) {

@@ -31,7 +31,7 @@ export class AuthenticationResult {
         this.tenantId = tenantId;
         this.idToken = idToken;
         if (userInfo) {
-            this.userInfo = userInfo; // REVIEW: UserInfo = new UserInfo(userInfo);
+            this.userInfo = new UserInfo(userInfo);
         }
     }
 }

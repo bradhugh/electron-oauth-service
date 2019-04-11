@@ -130,7 +130,11 @@ export class TokenCache extends EventEmitter {
         this.onBeforeAccess(args);
         const result: TokenCacheItem[] = [];
 
-        // TODO: Enumerate the items and add them to result
+        for (const entry of this.tokenCacheDictionary) {
+            const key = TokenCacheKey.fromStringKey(entry["0"]);
+            const item = new TokenCacheItem(key, entry["1"].result);
+            result.push(item);
+        }
 
         this.onAfterAccess(args);
         return result;
@@ -164,9 +168,9 @@ export class TokenCache extends EventEmitter {
 
         if (toRemoveStringKey) {
             this.tokenCacheDictionary.delete(toRemoveStringKey);
-            // Default.Logger.Information(null, "One item removed successfully");
+            CallState.default.logger.info("One item removed successfully");
         } else {
-            // CallState.Default.Logger.Information(null, "Item not Present in the Cache");
+            CallState.default.logger.info("Item not Present in the Cache");
         }
 
         this.hasStateChanged = true;
@@ -182,7 +186,7 @@ export class TokenCache extends EventEmitter {
 
         // clear the token cache
         this.tokenCacheDictionary.clear();
-        // CallState.Default.Logger.Information(null, "Successfully Cleared Cache");
+        CallState.default.logger.info("Successfully Cleared Cache");
 
         this.hasStateChanged = true;
         this.onAfterAccess(args);

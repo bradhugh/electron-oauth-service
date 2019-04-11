@@ -1,4 +1,5 @@
 import { AuthenticationResult } from "./AuthenticationResult";
+import { UserInfo } from "./UserInfo";
 
 export class AuthenticationResultEx {
 
@@ -16,7 +17,7 @@ export class AuthenticationResultEx {
         clone.result.extendedLifeTimeToken = source.result.extendedLifeTimeToken;
         clone.result.idToken = source.result.idToken;
         clone.result.tenantId = source.result.tenantId;
-        clone.result.userInfo = source.result.userInfo;
+        clone.result.userInfo = new UserInfo(source.result.userInfo);
     }
 
     public static deserialize(serializedObject: string): AuthenticationResultEx {

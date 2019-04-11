@@ -5,6 +5,7 @@ import { AuthenticationResultEx } from "../../AuthenticationResultEx";
 import { AdalErrorMessage } from "../../Constants";
 import { UserInfo } from "../../UserInfo";
 import { CallState } from "../CallState";
+import { IHttpWebResponse } from "../http/IHttpWebResponse";
 import { IdToken } from "./IdToken";
 
 // tslint:disable: max-classes-per-file
@@ -46,6 +47,9 @@ export interface IJsonTokenResponse {
 }
 
 export class TokenResponse {
+    public static createFromErrorResponse(webResponse: IHttpWebResponse): TokenResponse {
+        throw new Error("createFromErrorResponse - Method not implemented.");
+    }
 
     public static fromJson(jsonResp: IJsonTokenResponse): TokenResponse {
         const resp = new TokenResponse();
