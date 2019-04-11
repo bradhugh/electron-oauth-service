@@ -56,8 +56,8 @@ export class IdToken {
             // If Id token format is invalid, we silently ignore the id token
             if (idTokenSegments.length === 3) {
                 try {
-                    const idTokenString: string = Base64UrlEncoder.decodeBytes(idTokenSegments[1]);
-                    const jsonIdToken = JSON.parse(idTokenString) as IJsonIdToken;
+                    const idTokenBytes: Buffer = Base64UrlEncoder.decodeBytes(idTokenSegments[1]);
+                    const jsonIdToken = JSON.parse(idTokenBytes.toString("utf8")) as IJsonIdToken;
                     idTokenBody = IdToken.fromJsonToken(jsonIdToken);
                 } catch (error) {
                     // We silently ignore the id token if exception occurs.

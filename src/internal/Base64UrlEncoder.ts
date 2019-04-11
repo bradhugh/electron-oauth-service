@@ -6,7 +6,7 @@ export class Base64UrlEncoder {
     // The changes make the encoding alphabet file and URL safe
     // See RFC4648, section 5 for more info
     //
-    public static decodeBytes(arg: string): string {
+    public static decodeBytes(arg: string): Buffer {
         let s = arg;
         s = s.replace(
             Base64UrlEncoder.base64UrlCharacter62, Base64UrlEncoder.base64Character62); // 62nd char of encoding
@@ -27,16 +27,18 @@ export class Base64UrlEncoder {
                 throw new Error(`Illegal base64url string! ${arg}`);
         }
 
-        return btoa(s); // Standard base64 decoder
+        // Standard base64 decoder
+        const bytes = Buffer.from(s, "base64");
+        return bytes;
 
     }
 
-    public static Encode(arg: string): string {
+    public static Encode(arg: Buffer): string {
         if (!arg) {
             throw new Error("arg cannot be null");
         }
 
-        let s = atob(arg);
+        let s = arg.toString("base64");
         s = s.split(Base64UrlEncoder.base64PadCharacter)[0]; // Remove any trailing padding
         s = s.replace(
             Base64UrlEncoder.base64Character62, Base64UrlEncoder.base64UrlCharacter62);  // 62nd char of encoding
