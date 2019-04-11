@@ -7,6 +7,7 @@ import { UserInfo } from "../../UserInfo";
 import { CallState } from "../CallState";
 import { IHttpWebResponse } from "../http/IHttpWebResponse";
 import { IdToken } from "./IdToken";
+import { HttpStatusCode } from "../http/HttpStatusCode";
 
 // tslint:disable: max-classes-per-file
 
@@ -48,7 +49,29 @@ export interface IJsonTokenResponse {
 
 export class TokenResponse {
     public static createFromErrorResponse(webResponse: IHttpWebResponse): TokenResponse {
-        throw new Error("createFromErrorResponse - Method not implemented.");
+        let tokenResponse = new TokenResponse();
+        if (!webResponse) {
+            tokenResponse.error = AdalErrorCode.serviceReturnedError;
+            tokenResponse.errorDescription = AdalErrorMessage.serviceReturnedError;
+            return tokenResponse;
+        }
+
+        if (!webResponse.responseString) {
+            tokenResponse.error = AdalErrorCode.unknown;
+            tokenResponse.errorDescription = AdalErrorMessage.unknown;
+            return tokenResponse;
+        }
+
+        try {
+            const tokenRespJson = JSON.parse(webResponse.responseString) as IJsonTokenResponse;
+            tokenResponse = TokenResponse.fromJson(tokenRespJson);
+        } catch (jsonParseError) {
+            tokenResponse.error = webResponse.statusCode === HttpStatusCode.ServiceUnavailable
+                ? AdalErrorCode.serviceUnavailable : AdalErrorCode.unknown;
+            tokenResponse.errorDescription = webResponse.responseString;
+        }
+
+        return tokenResponse;
     }
 
     public static fromJson(jsonResp: IJsonTokenResponse): TokenResponse {
