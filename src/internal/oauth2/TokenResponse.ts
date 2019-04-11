@@ -5,9 +5,9 @@ import { AuthenticationResultEx } from "../../AuthenticationResultEx";
 import { AdalErrorMessage } from "../../Constants";
 import { UserInfo } from "../../UserInfo";
 import { CallState } from "../CallState";
+import { HttpStatusCode } from "../http/HttpStatusCode";
 import { IHttpWebResponse } from "../http/IHttpWebResponse";
 import { IdToken } from "./IdToken";
-import { HttpStatusCode } from "../http/HttpStatusCode";
 
 // tslint:disable: max-classes-per-file
 
