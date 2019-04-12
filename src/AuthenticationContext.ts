@@ -4,6 +4,7 @@ import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { CallState } from "./internal/CallState";
 import { ClientKey } from "./internal/clientcreds/ClientKey";
 import { AcquireTokenInteractiveHandler } from "./internal/flows/AcquireTokenInteractiveHandler";
+import { AcquireTokenSilentHandler } from "./internal/flows/AcquireTokenSilentHandler";
 import { IPlatformParameters } from "./internal/platform/IPlatformParameters";
 import { IWebUI } from "./internal/platform/IWebUI";
 import { WebUIFactoryProvider } from "./internal/platform/WebUIFactoryProvider";
@@ -78,6 +79,18 @@ export class AuthenticationContext {
         return result;
     }
 
+    public async acquireTokenSilentAsync(
+        resource: string,
+        clientId: string,
+        userId: UserIdentifier,
+        parameters: IPlatformParameters): Promise<AuthenticationResult> {
+
+        // Do this just in case our passed in user doesn't have the UserIdentifier prototype
+        userId = new UserIdentifier(userId.id, userId.type);
+
+        return await this.acquireTokenSilentCommonAsync(resource, new ClientKey(clientId), userId, parameters);
+    }
+
     public clearCache(): void {
         this.tokenCache.clear();
     }
@@ -105,6 +118,29 @@ export class AuthenticationContext {
 
         const handler = new AcquireTokenInteractiveHandler(requestData, new URL(redirectUri), parameters, userId,
             extraQueryParameters, this.createWebAuthenticationDialog(parameters), claims);
+        const result = await handler.runAsync();
+        return result;
+    }
+
+    private async acquireTokenSilentCommonAsync(
+        resource: string,
+        clientKey: ClientKey,
+        userId: UserIdentifier,
+        parameters: IPlatformParameters): Promise<AuthenticationResult> {
+
+        const correlationId = Utils.newGuid();
+
+        const requestData: IRequestData = {
+            authenticator: this.authenticator,
+            tokenCache: this.tokenCache,
+            resource,
+            clientKey,
+            extendedLifeTimeEnabled: this.extendedLifeTimeEnabled,
+            subjectType: TokenSubjectType.User,
+            correlationId,
+        };
+
+        const handler = new AcquireTokenSilentHandler(requestData, userId, parameters);
         const result = await handler.runAsync();
         return result;
     }

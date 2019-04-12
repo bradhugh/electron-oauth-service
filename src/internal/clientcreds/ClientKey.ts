@@ -1,6 +1,9 @@
 import { OAuthParameter } from "../oauth2/OAuthConstants";
 
 export class ClientKey {
+
+    public hasCredential = false;
+
     constructor(public clientId: string) {}
 
     public addToParameters(parameters: Map<string, string>): void {
