@@ -1,4 +1,6 @@
 import { AuthenticationResult } from "./AuthenticationResult";
+import { ConsoleLogger } from "./core/ConsoleLogger";
+import { ILogger } from "./ILogger";
 import { Authenticator } from "./instance/Authenticator";
 import { TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { CallState } from "./internal/CallState";
@@ -25,36 +27,19 @@ export class AuthenticationContext {
 
     public authenticator: Authenticator;
 
-    private callState: CallState = new CallState(Utils.guidEmpty);
-
     constructor(
         public authority: string,
         validateAuthority: AuthorityValidationType = AuthorityValidationType.NotProvided,
         public tokenCache: TokenCache = TokenCache.defaultShared,
+        private logger?: ILogger,
     ) {
+        if (!logger) {
+            this.logger = new ConsoleLogger(Utils.guidEmpty);
+        }
+
         this.authenticator = new Authenticator(
             authority,
             (validateAuthority !== AuthorityValidationType.False));
-    }
-
-    public getCachedResult(resource: string, clientId: string): AuthenticationResult {
-        // Check if token is in the cache
-        const exResult = this.tokenCache.loadFromCacheAsync({
-            authority: this.authority,
-            resource,
-            clientId,
-            subjectType: TokenSubjectType.Client,
-            extendedLifeTimeEnabled: false,
-        },
-        this.callState);
-
-        // If we actually found a cache entry, return it
-        if (exResult) {
-            return exResult.result;
-        }
-
-        // No cache entry, so build an empty result
-        return new AuthenticationResult(null, null, null);
     }
 
     public async acquireTokenAsync(
@@ -117,7 +102,7 @@ export class AuthenticationContext {
         };
 
         const handler = new AcquireTokenInteractiveHandler(requestData, new URL(redirectUri), parameters, userId,
-            extraQueryParameters, this.createWebAuthenticationDialog(parameters), claims);
+            extraQueryParameters, this.createWebAuthenticationDialog(parameters), claims, this.logger);
         const result = await handler.runAsync();
         return result;
     }
@@ -140,7 +125,7 @@ export class AuthenticationContext {
             correlationId,
         };
 
-        const handler = new AcquireTokenSilentHandler(requestData, userId, parameters);
+        const handler = new AcquireTokenSilentHandler(requestData, userId, parameters, this.logger);
         const result = await handler.runAsync();
         return result;
     }

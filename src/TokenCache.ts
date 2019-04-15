@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 import { AuthenticationResult } from "./AuthenticationResult";
 import { AuthenticationResultEx } from "./AuthenticationResultEx";
-import { ConsoleLogger } from "./core/AdalLogger";
-import { ICoreLogger } from "./core/CoreLoggerBase";
+import { ConsoleLogger } from "./core/ConsoleLogger";
+import { ILogger } from "./ILogger";
 import { ICacheQueryData } from "./internal/cache/CacheQueryData";
 import { TokenCacheKey, TokenSubjectType } from "./internal/cache/TokenCacheKey";
 import { CallState } from "./internal/CallState";
@@ -24,9 +24,9 @@ export class TokenCache extends EventEmitter {
     // hard coded setting to refresh tokens which are close to expiration.
     private static expirationMarginInMinutes = 5;
 
-    private static logger: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
+    private static defaultLogger: ILogger = new ConsoleLogger(Utils.guidEmpty);
 
-    private static $defaultShared = new TokenCache(TokenCache.logger);
+    private static $defaultShared = new TokenCache(TokenCache.defaultLogger);
 
     private static isSameCloud(authority: string, authority1: string): boolean {
         return new URL(authority).host === new URL(authority1).host;
@@ -37,11 +37,11 @@ export class TokenCache extends EventEmitter {
     private tokenCacheDictionary = new Map<string, AuthenticationResultEx>();
 
     // Constructor that receives the optional state of the cache
-    constructor(private logger: ICoreLogger, state?: Buffer) {
+    constructor(private logger?: ILogger, state?: Buffer) {
         super();
 
         if (!logger) {
-            this.logger = TokenCache.logger;
+            this.logger = TokenCache.defaultLogger;
         }
 
         if (state) {
@@ -168,9 +168,9 @@ export class TokenCache extends EventEmitter {
 
         if (toRemoveStringKey) {
             this.tokenCacheDictionary.delete(toRemoveStringKey);
-            CallState.default.logger.info("One item removed successfully");
+            this.logger.info("One item removed successfully");
         } else {
-            CallState.default.logger.info("Item not Present in the Cache");
+            this.logger.info("Item not Present in the Cache");
         }
 
         this.hasStateChanged = true;
@@ -186,7 +186,7 @@ export class TokenCache extends EventEmitter {
 
         // clear the token cache
         this.tokenCacheDictionary.clear();
-        CallState.default.logger.info("Successfully Cleared Cache");
+        this.logger.info("Successfully Cleared Cache");
 
         this.hasStateChanged = true;
         this.onAfterAccess(args);

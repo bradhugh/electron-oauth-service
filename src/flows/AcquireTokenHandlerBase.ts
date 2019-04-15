@@ -4,6 +4,8 @@ import { AdalServiceError } from "../AdalServiceError";
 import { AuthenticationResult } from "../AuthenticationResult";
 import { AuthenticationResultEx } from "../AuthenticationResultEx";
 import { AdalErrorMessage } from "../Constants";
+import { ConsoleLogger } from "../core/ConsoleLogger";
+import { ILogger } from "../ILogger";
 import { Authenticator, AuthorityType } from "../instance/Authenticator";
 import { InstanceDiscovery } from "../instance/InstanceDiscovery";
 import { ICacheQueryData } from "../internal/cache/CacheQueryData";
@@ -25,9 +27,10 @@ import { BrokerParameter } from "./BrokerParameter";
 
 export abstract class AcquireTokenHandlerBase {
 
-    public static createCallState(correlationId: string): CallState {
-        correlationId = (correlationId !== Utils.guidEmpty) ? correlationId : Utils.newGuid();
-        return new CallState(correlationId);
+    public static createCallState(correlationId: string, logger: ILogger): CallState {
+        correlationId = (correlationId && correlationId !== Utils.guidEmpty) ? correlationId : Utils.newGuid();
+        logger = logger ? logger : new ConsoleLogger(correlationId);
+        return new CallState(correlationId, logger);
     }
 
     protected static nullResource: string = "null_resource_as_optional";
@@ -62,11 +65,12 @@ export abstract class AcquireTokenHandlerBase {
 
     private client: AdalHttpClient = null;
 
-    protected constructor(requestData: IRequestData) {
+    protected constructor(requestData: IRequestData, logger: ILogger) {
         this.authenticator = requestData.authenticator;
-        this.callState = AcquireTokenHandlerBase.createCallState(requestData.correlationId !== Utils.guidEmpty
-            ? requestData.correlationId
-            : this.authenticator.correlationId);
+        this.callState = AcquireTokenHandlerBase.createCallState(
+            requestData.correlationId !== Utils.guidEmpty ?
+                requestData.correlationId : this.authenticator.correlationId,
+            logger);
         this.tokenCache = requestData.tokenCache;
 
         if (!requestData.resource) {
@@ -272,7 +276,7 @@ export abstract class AcquireTokenHandlerBase {
 
         const jsonResponse = await this.client.getResponseAsync<IJsonTokenResponse>();
         const tokenResponse = TokenResponse.fromJson(jsonResponse);
-        return tokenResponse.getResult();
+        return tokenResponse.getResult(this.callState);
     }
 
     private async storeResultExToCacheAsync(notifiedBeforeAccessCache: boolean): Promise<boolean> {

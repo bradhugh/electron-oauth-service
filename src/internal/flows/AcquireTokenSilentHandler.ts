@@ -3,6 +3,7 @@ import { AuthenticationResultEx } from "../../AuthenticationResultEx";
 import { AdalErrorMessage } from "../../Constants";
 import { AcquireTokenHandlerBase } from "../../flows/AcquireTokenHandlerBase";
 import { BrokerParameter } from "../../flows/BrokerParameter";
+import { ILogger } from "../../ILogger";
 import { UserIdentifier, UserIdentifierType } from "../../UserIdentifier";
 import { TokenSubjectType } from "../cache/TokenCacheKey";
 import { IPlatformParameters } from "../platform/IPlatformParameters";
@@ -14,9 +15,10 @@ export class AcquireTokenSilentHandler extends AcquireTokenHandlerBase {
     constructor(
         requestData: IRequestData,
         userId: UserIdentifier,
-        parameters: IPlatformParameters) {
+        parameters: IPlatformParameters,
+        logger: ILogger) {
 
-        super(requestData);
+        super(requestData, logger);
 
         if (!userId) {
             throw new Error(AdalErrorMessage.specifyAnyUser);

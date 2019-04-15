@@ -1,8 +1,8 @@
-import { ICoreLogger } from "./CoreLoggerBase";
+import { ILogger } from "../ILogger";
 
 // tslint:disable: no-console
 
-export class ConsoleLogger implements ICoreLogger {
+export class ConsoleLogger implements ILogger {
     public piiLoggingEnabled: boolean = true;
 
     constructor(public correlationId: string) {}

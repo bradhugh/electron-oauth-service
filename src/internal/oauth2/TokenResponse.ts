@@ -3,6 +3,7 @@ import { AdalServiceError } from "../../AdalServiceError";
 import { AuthenticationResult } from "../../AuthenticationResult";
 import { AuthenticationResultEx } from "../../AuthenticationResultEx";
 import { AdalErrorMessage } from "../../Constants";
+import { ILogger } from "../../ILogger";
 import { UserInfo } from "../../UserInfo";
 import { CallState } from "../CallState";
 import { HttpStatusCode } from "../http/HttpStatusCode";
@@ -109,13 +110,13 @@ export class TokenResponse {
     public claims: string;
     public authority: string = null;
 
-    public getResult(): AuthenticationResultEx {
+    public getResult(callState: CallState): AuthenticationResultEx {
         // extendedExpiresOn can be less than expiresOn if
         // the server did not return extendedExpiresOn in the
         // token response. Default json deserialization will set
         // the value to 0.
         if (this.extendedExpiresIn < this.expiresIn) {
-            CallState.default.logger.info(
+            callState.logger.info(
                 `ExtendedExpiresIn(${this.extendedExpiresIn}) is less than ExpiresIn(${this.expiresIn}). ` +
                 "Set ExpiresIn as ExtendedExpiresIn");
             this.extendedExpiresIn = this.expiresIn;

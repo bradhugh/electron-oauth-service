@@ -7,6 +7,7 @@ import { AdalErrorMessage } from "../../Constants";
 import { AcquireTokenHandlerBase } from "../../flows/AcquireTokenHandlerBase";
 import { BrokerParameter } from "../../flows/BrokerParameter";
 import { EncodingHelper } from "../../helpers/EncodingHelper";
+import { ILogger } from "../../ILogger";
 import { UserIdentifier, UserIdentifierType } from "../../UserIdentifier";
 import { Utils } from "../../Utils";
 import { AuthorizationResult, AuthorizationStatus } from "../AuthorizationResult";
@@ -48,9 +49,10 @@ export class AcquireTokenInteractiveHandler extends AcquireTokenHandlerBase {
         userId: UserIdentifier,
         extraQueryParameters: string,
         webUI: IWebUI,
-        claims: string) {
+        claims: string,
+        logger: ILogger) {
 
-        super(requestData);
+        super(requestData, logger);
 
         this.redirectUri = this.platformInformation.validateRedirectUri(redirectUri, this.callState);
 

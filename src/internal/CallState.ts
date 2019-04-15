@@ -1,13 +1,10 @@
-import { ConsoleLogger } from "../core/AdalLogger";
-import { ICoreLogger } from "../core/CoreLoggerBase";
+import { ConsoleLogger } from "../core/ConsoleLogger";
+import { ILogger } from "../ILogger";
 import { Utils } from "../Utils";
 
 export class CallState {
-    public static default: CallState = new CallState(Utils.guidEmpty);
-
-    public logger: ICoreLogger;
-
-    constructor(public correlationId: string) {
-        this.logger = new ConsoleLogger(correlationId);
+    constructor(
+        public correlationId: string,
+        public logger: ILogger) {
     }
 }

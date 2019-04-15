@@ -1,7 +1,5 @@
-import { Utils } from "../Utils";
-import { ConsoleLogger } from "./AdalLogger";
 
-export interface ICoreLogger {
+export interface ILogger {
     correlationId: string;
     piiLoggingEnabled: boolean;
 
@@ -22,8 +20,4 @@ export interface ICoreLogger {
 
     verbose(messageScrubbed: string): void;
     verbosePii(messageWithPii: string): void;
-}
-
-export class CoreLoggerBase {
-    public static default: ICoreLogger = new ConsoleLogger(Utils.guidEmpty);
 }
