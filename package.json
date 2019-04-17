@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/bradhugh/electron-oauth-service#readme",
   "dependencies": {
-    "electron-oauth-helper": "git://github.com/bradhugh/electron-oauth-helper.git#fixes",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
