@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/bradhugh/electron-oauth-service#readme",
   "dependencies": {
+    "select-client-cert": "git://github.com/bradhugh/select-client-cert.git",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
