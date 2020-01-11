@@ -1,6 +1,6 @@
 {
-  "name": "electron-oauth-service",
-  "version": "1.0.5",
+  "name": "@bradhugh/electron-oauth-service",
+  "version": "2.0.0",
   "description": "An authentication service for electron applications",
   "main": "dist/index.js",
   "scripts": {
@@ -22,14 +22,14 @@
   },
   "homepage": "https://github.com/bradhugh/electron-oauth-service#readme",
   "dependencies": {
-    "select-client-cert": "git://github.com/bradhugh/select-client-cert.git",
+    "@bradhugh/select-client-cert": "^1.0.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/electron": "^1.6.10",
     "@types/node": "^11.12.0",
     "@types/uuid": "^3.4.4",
-    "tslint": "^5.15.0",
+    "tslint": "^5.20.1",
     "typescript": "^3.3.4000"
   }
 }
