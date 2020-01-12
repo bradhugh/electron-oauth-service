@@ -1,6 +1,6 @@
 {
   "name": "@bradhugh/electron-oauth-service",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "An authentication service for electron applications",
   "main": "dist/index.js",
   "scripts": {
