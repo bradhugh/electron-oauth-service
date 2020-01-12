@@ -62,7 +62,7 @@ export class ElectronWebAuthenticationDialog {
 
                         event.preventDefault();
 
-                        const certIndex = require("select-client-cert").selectClientCert(
+                        const certIndex = require("@bradhugh/select-client-cert").selectClientCert(
                             certList.map((cert) => cert.data));
 
                         if (certIndex >= 0) {
