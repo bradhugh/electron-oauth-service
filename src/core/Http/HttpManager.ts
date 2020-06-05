@@ -47,7 +47,6 @@ export class HttpManager implements IHttpManager {
 
         const postData = querystring.stringify(bodyParameters);
         headers["content-type"] = "application/x-www-form-urlencoded";
-        headers["content-length"] = Buffer.byteLength(postData).toString();
 
         const resp = await this.requestCommonAsync(
             endpoint,

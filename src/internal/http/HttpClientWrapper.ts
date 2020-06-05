@@ -92,7 +92,6 @@ export class HttpClientWrapper implements IHttpClient {
 
             if (bodyContent && contentType) {
                 request.setHeader("Content-Type", contentType);
-                request.setHeader("Content-Length", Buffer.byteLength(bodyContent));
             }
 
             for (const header of this.headers.getAllEntries()) {
